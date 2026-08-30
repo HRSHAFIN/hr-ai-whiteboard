@@ -88,8 +88,11 @@ export function WorkspaceEditor({
     setActiveToolState(appState.activeTool.type);
 
     const selectedIds = Object.keys(appState.selectedElementIds);
+    // Hide the properties toolbar while actively typing/editing text -- it
+    // would otherwise float directly over the text being edited, blocking
+    // the view of what's being typed.
     const active =
-      selectedIds.length === 1
+      selectedIds.length === 1 && !appState.editingTextElement
         ? elements.find((el) => el.id === selectedIds[0] && !el.isDeleted) ?? null
         : null;
     setSelectedElement((prev) => {
