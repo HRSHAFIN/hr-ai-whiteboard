@@ -14,6 +14,7 @@ import { renameWhiteboard, saveWhiteboardData } from "@/app/workspace/[projectId
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PropertiesToolbar } from "@/components/workspace/properties-toolbar";
 import { WhiteboardQuickTools } from "@/components/workspace/whiteboard-quick-tools";
 import { WhiteboardToolbar } from "@/components/workspace/whiteboard-toolbar";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,8 @@ export function WorkspaceEditor({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
   const [activeTool, setActiveToolState] = useState<string>("selection");
+  const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
+  const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
   const [, startTransition] = useTransition();
 
   const sceneRef = useRef({
@@ -81,6 +84,22 @@ export function WorkspaceEditor({
       appState: { viewBackgroundColor: appState.viewBackgroundColor },
     };
     setActiveToolState(appState.activeTool.type);
+
+    const selectedIds = Object.keys(appState.selectedElementIds);
+    const active =
+      selectedIds.length === 1
+        ? elements.find((el) => el.id === selectedIds[0] && !el.isDeleted) ?? null
+        : null;
+    setSelectedElement(active);
+    setToolbarPosition(
+      active
+        ? {
+            x: (active.x + active.width / 2 + appState.scrollX) * appState.zoom.value + appState.offsetLeft,
+            y: (active.y + appState.scrollY) * appState.zoom.value + appState.offsetTop,
+          }
+        : null
+    );
+
     scheduleSave();
   };
 
@@ -181,6 +200,14 @@ export function WorkspaceEditor({
           />
           <WhiteboardToolbar excalidrawAPI={excalidrawAPI} activeTool={activeTool} />
           <WhiteboardQuickTools excalidrawAPI={excalidrawAPI} />
+          {selectedElement && toolbarPosition && (
+            <PropertiesToolbar
+              key={selectedElement.id}
+              excalidrawAPI={excalidrawAPI}
+              element={selectedElement}
+              position={toolbarPosition}
+            />
+          )}
         </div>
       )}
     </div>

@@ -128,9 +128,12 @@
     }
 }
 
-/* Custom whiteboard chrome: hide Excalidraw's default shape toolbar and
-   bottom-left zoom/undo cluster in favor of our own left + floating toolbars. */
+/* Custom whiteboard chrome: hide Excalidraw's default shape toolbar,
+   bottom-left zoom/undo cluster, and per-selection properties panel in
+   favor of our own left toolbar, floating quick-tools bar, and
+   above-selection properties toolbar. */
 .custom-whiteboard-shell .App-toolbar-container,
-.custom-whiteboard-shell .layer-ui__wrapper__footer-left {
+.custom-whiteboard-shell .layer-ui__wrapper__footer-left,
+.custom-whiteboard-shell .selected-shape-actions {
   display: none !important;
 }
