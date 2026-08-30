@@ -154,13 +154,13 @@ export function WorkspaceEditor({
 
   return (
     <div className="flex h-svh flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
-        <Button variant="ghost" size="icon-sm" render={<Link href="/dashboard" />}>
+      <header className="flex h-14 min-w-0 shrink-0 items-center gap-1.5 border-b px-2 sm:gap-3 sm:px-4">
+        <Button variant="ghost" size="icon-sm" render={<Link href="/dashboard" />} className="shrink-0">
           <ArrowLeft />
           <span className="sr-only">Back to Dashboard</span>
         </Button>
 
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
+        <div className="hidden size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground sm:flex">
           W
         </div>
 
@@ -168,16 +168,16 @@ export function WorkspaceEditor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
-          className="h-8 w-48 border-transparent bg-transparent font-heading text-sm font-semibold shadow-none focus-visible:border-ring"
+          className="h-8 w-20 min-w-0 shrink border-transparent bg-transparent font-heading text-sm font-semibold shadow-none focus-visible:border-ring sm:w-48"
         />
 
-        <div className="flex items-center rounded-full bg-muted p-0.5">
+        <div className="flex shrink-0 items-center rounded-full bg-muted p-0.5">
           {(["whiteboard", "doc"] as WorkspaceMode[]).map((m) => (
             <button
               key={m}
               onClick={() => handleModeChange(m)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors",
+                "rounded-full px-2 py-1 text-xs font-medium capitalize transition-colors sm:px-3",
                 mode === m
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -188,8 +188,8 @@ export function WorkspaceEditor({
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-3">
+          <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
             {saveState === "saving" && (
               <>
                 <Loader2 className="size-3 animate-spin" /> Saving...
@@ -204,12 +204,12 @@ export function WorkspaceEditor({
           {mode === "whiteboard" && (
             <Button variant="outline" size="sm" onClick={handleExportImage}>
               <Download />
-              Export
+              <span className="hidden sm:inline">Export</span>
             </Button>
           )}
           <Button size="sm" onClick={handleManualSave}>
             <Save />
-            Save
+            <span className="hidden sm:inline">Save</span>
           </Button>
           <UserButton />
         </div>

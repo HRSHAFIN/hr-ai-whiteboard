@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import type { AiDiagramResponse, AiDiagramType } from "@/lib/ai-diagram-types";
 
+// Gemini can take longer than the platform's default function timeout,
+// especially under load. Allow up to 60s for a single generation.
+export const maxDuration = 60;
+
 const TYPE_GUIDANCE: Record<AiDiagramType, string> = {
   diagram: "a general-purpose conceptual diagram",
   flowchart:
@@ -114,6 +118,15 @@ export async function POST(req: Request) {
     return NextResponse.json(parsed);
   } catch (error) {
     console.error("AI diagram generation failed:", error);
+
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("UNAVAILABLE") || message.includes("high demand")) {
+      return NextResponse.json(
+        { error: "Gemini is experiencing high demand right now. Please try again in a moment." },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 502 });
   }
 }

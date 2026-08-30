@@ -166,8 +166,8 @@ export function AiSidebar({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="flex w-full flex-col sm:max-w-sm">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+        <SheetHeader className="pr-10">
+          <SheetTitle className="flex w-fit items-center gap-2">
             <Sparkles className="size-4 text-primary" />
             AI Tools
           </SheetTitle>

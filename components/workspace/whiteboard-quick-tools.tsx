@@ -45,7 +45,7 @@ export function WhiteboardQuickTools({
   };
 
   return (
-    <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border bg-popover p-1.5 shadow-lg">
+    <div className="absolute bottom-4 left-1/2 z-10 flex max-w-[calc(100vw-6rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-full border bg-popover p-1.5 shadow-lg">
       {QUICK_COLORS.map((color) => (
         <button
           key={color}
