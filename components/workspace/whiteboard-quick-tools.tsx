@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { EmojiIconsPopover } from "@/components/workspace/emoji-icons-popover";
+import { NotesPopover } from "@/components/workspace/notes-popover";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 const QUICK_COLORS = [
@@ -70,6 +72,11 @@ export function WhiteboardQuickTools({
         <Type />
         <span className="sr-only">Text</span>
       </Button>
+
+      <div className="mx-1 h-5 w-px bg-border" />
+
+      <NotesPopover excalidrawAPI={excalidrawAPI} />
+      <EmojiIconsPopover excalidrawAPI={excalidrawAPI} />
 
       <div className="mx-1 h-5 w-px bg-border" />
 

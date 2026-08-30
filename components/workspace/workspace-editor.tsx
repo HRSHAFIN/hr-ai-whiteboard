@@ -49,6 +49,7 @@ export function WorkspaceEditor({
   const sceneRef = useRef({
     elements: initialData.elements,
     appState: initialData.appState,
+    files: initialData.files,
   });
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,6 +61,7 @@ export function WorkspaceEditor({
         doc,
         elements: sceneRef.current.elements,
         appState: sceneRef.current.appState,
+        files: sceneRef.current.files,
       });
       setSaveState("saved");
     });
@@ -79,11 +81,12 @@ export function WorkspaceEditor({
   const handleExcalidrawChange = (
     elements: readonly ExcalidrawElement[],
     appState: AppState,
-    _files: BinaryFiles
+    files: BinaryFiles
   ) => {
     sceneRef.current = {
       elements,
       appState: { viewBackgroundColor: appState.viewBackgroundColor },
+      files,
     };
     setActiveToolState(appState.activeTool.type);
 
@@ -234,6 +237,7 @@ export function WorkspaceEditor({
             initialData={{
               elements: sceneRef.current.elements,
               appState: sceneRef.current.appState,
+              files: sceneRef.current.files,
               scrollToContent: true,
             }}
             onChange={handleExcalidrawChange}
