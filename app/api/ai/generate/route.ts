@@ -28,6 +28,14 @@ const TYPE_GUIDANCE: Record<AiDiagramType, string> = {
 const MODELS = ["gemini-3.7-flash", "gemini-3.6-flash"] as const;
 
 const GENERATION_CONFIG = {
+  // The SDK retries failed requests up to 5x with backoff by default (up to
+  // ~90s+ on a persistent 503), which blew past our own maxDuration and got
+  // killed by the platform before our own fallback loop ever ran. Fail fast
+  // per model instead and let our own model-fallback loop do the retrying.
+  httpOptions: {
+    timeout: 20000,
+    retryOptions: { attempts: 1 },
+  },
   systemInstruction:
     "You design simple node-and-edge diagrams for a whiteboard app. Lay nodes out with no overlap on a canvas roughly 1200 wide and 800 tall, with at least 40px gaps between shapes. Shape widths should be 120-260 and heights 60-120. Keep labels under 6 words. Return between 3 and 12 nodes. Use hex colors for the optional node color field.",
   responseMimeType: "application/json",
@@ -70,7 +78,12 @@ const GENERATION_CONFIG = {
 
 function isHighDemandError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  return message.includes("UNAVAILABLE") || message.includes("high demand");
+  return (
+    message.includes("UNAVAILABLE") ||
+    message.includes("high demand") ||
+    message.includes("aborted") ||
+    message.includes("timeout")
+  );
 }
 
 export async function POST(req: Request) {
@@ -115,8 +128,12 @@ export async function POST(req: Request) {
       break;
     } catch (error) {
       lastError = error;
-      if (!isHighDemandError(error)) break; // don't fall back for non-capacity errors
-      console.error(`AI model ${model} unavailable, trying next fallback:`, error);
+      // Fall back to the next model on ANY failure (capacity, timeout/abort,
+      // transient network errors, etc.) -- a slow/hanging model is just as
+      // unusable as an explicit "high demand" response, and the only cost of
+      // falling back on a real config-level error (e.g. bad API key) is a
+      // few wasted seconds before that same error repeats and surfaces.
+      console.error(`AI model ${model} failed, trying next fallback:`, error);
     }
   }
 
