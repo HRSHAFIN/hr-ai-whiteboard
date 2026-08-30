@@ -22,6 +22,57 @@ const TYPE_GUIDANCE: Record<AiDiagramType, string> = {
     "a mind map with one central topic ellipse connected to several surrounding idea ellipses",
 };
 
+// Preferred model first, then a fallback used only if the preferred one is
+// unavailable (e.g. a "high demand" 503) -- gemini-3.7-flash is very new and
+// still capacity-constrained at times, so fall back rather than fail.
+const MODELS = ["gemini-3.7-flash", "gemini-3.6-flash"] as const;
+
+const GENERATION_CONFIG = {
+  systemInstruction:
+    "You design simple node-and-edge diagrams for a whiteboard app. Lay nodes out with no overlap on a canvas roughly 1200 wide and 800 tall, with at least 40px gaps between shapes. Shape widths should be 120-260 and heights 60-120. Keep labels under 6 words. Return between 3 and 12 nodes. Use hex colors for the optional node color field.",
+  responseMimeType: "application/json",
+  responseSchema: {
+    type: "OBJECT",
+    properties: {
+      nodes: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            id: { type: "STRING" },
+            shape: { type: "STRING", enum: ["rectangle", "ellipse", "diamond"] },
+            label: { type: "STRING" },
+            x: { type: "NUMBER" },
+            y: { type: "NUMBER" },
+            width: { type: "NUMBER" },
+            height: { type: "NUMBER" },
+            color: { type: "STRING" },
+          },
+          required: ["id", "shape", "label", "x", "y", "width", "height"],
+        },
+      },
+      edges: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            from: { type: "STRING" },
+            to: { type: "STRING" },
+            label: { type: "STRING" },
+          },
+          required: ["from", "to"],
+        },
+      },
+    },
+    required: ["nodes", "edges"],
+  },
+} as const;
+
+function isHighDemandError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("UNAVAILABLE") || message.includes("high demand");
+}
+
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) {
@@ -51,82 +102,49 @@ export async function POST(req: Request) {
     ? `Here is the current diagram as JSON:\n${JSON.stringify(existing)}\n\nUpdate it to: ${prompt}\n\nReturn the complete, updated diagram (all nodes and edges, not just the changes), reusing existing "id" values for nodes you keep so the layout stays stable.`
     : `Create ${guidance} for: ${prompt}`;
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey });
 
-    const result = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
-      contents,
-      config: {
-        systemInstruction:
-          "You design simple node-and-edge diagrams for a whiteboard app. Lay nodes out with no overlap on a canvas roughly 1200 wide and 800 tall, with at least 40px gaps between shapes. Shape widths should be 120-260 and heights 60-120. Keep labels under 6 words. Return between 3 and 12 nodes. Use hex colors for the optional node color field.",
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            nodes: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  id: { type: "STRING" },
-                  shape: { type: "STRING", enum: ["rectangle", "ellipse", "diamond"] },
-                  label: { type: "STRING" },
-                  x: { type: "NUMBER" },
-                  y: { type: "NUMBER" },
-                  width: { type: "NUMBER" },
-                  height: { type: "NUMBER" },
-                  color: { type: "STRING" },
-                },
-                required: ["id", "shape", "label", "x", "y", "width", "height"],
-              },
-            },
-            edges: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  from: { type: "STRING" },
-                  to: { type: "STRING" },
-                  label: { type: "STRING" },
-                },
-                required: ["from", "to"],
-              },
-            },
-          },
-          required: ["nodes", "edges"],
-        },
-      },
-    });
+  let text: string | undefined;
+  let lastError: unknown;
 
-    const text = result.text;
-    if (!text) {
-      return NextResponse.json({ error: "AI returned an empty response" }, { status: 502 });
-    }
-
-    let parsed: AiDiagramResponse;
+  for (const model of MODELS) {
     try {
-      parsed = JSON.parse(text);
-    } catch {
-      return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 502 });
+      const result = await ai.models.generateContent({ model, contents, config: GENERATION_CONFIG });
+      text = result.text;
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (!isHighDemandError(error)) break; // don't fall back for non-capacity errors
+      console.error(`AI model ${model} unavailable, trying next fallback:`, error);
     }
+  }
 
-    if (!Array.isArray(parsed.nodes) || parsed.nodes.length === 0) {
-      return NextResponse.json({ error: "AI returned no diagram nodes" }, { status: 502 });
-    }
-
-    return NextResponse.json(parsed);
-  } catch (error) {
-    console.error("AI diagram generation failed:", error);
-
-    const message = error instanceof Error ? error.message : String(error);
-    if (message.includes("UNAVAILABLE") || message.includes("high demand")) {
+  if (lastError) {
+    console.error("AI diagram generation failed on all models:", lastError);
+    if (isHighDemandError(lastError)) {
       return NextResponse.json(
         { error: "Gemini is experiencing high demand right now. Please try again in a moment." },
         { status: 503 }
       );
     }
-
     return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 502 });
   }
+
+  if (!text) {
+    return NextResponse.json({ error: "AI returned an empty response" }, { status: 502 });
+  }
+
+  let parsed: AiDiagramResponse;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 502 });
+  }
+
+  if (!Array.isArray(parsed.nodes) || parsed.nodes.length === 0) {
+    return NextResponse.json({ error: "AI returned no diagram nodes" }, { status: 502 });
+  }
+
+  return NextResponse.json(parsed);
 }
