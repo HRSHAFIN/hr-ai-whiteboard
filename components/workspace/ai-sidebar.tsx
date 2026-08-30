@@ -104,97 +104,186 @@ function lightenHex(hex: string, amount: number): string {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function buildNotesSkeleton(
+type ConvertFn = (
+  skeleton: ExcalidrawElementSkeleton[]
+) => ReturnType<
+  typeof import("@excalidraw/excalidraw")["convertToExcalidrawElements"]
+>;
+
+// Bound "label" text on a container auto-wraps and grows the container to
+// fit, which is what bullet lists need (their length varies a lot). But a
+// short SINGLE-LINE bound label -- title, heading, tip -- turned out to hit a
+// real Excalidraw text-measurement glitch where it renders visibly clipped
+// even though its own recorded width fits comfortably inside the container
+// (confirmed in isolation: same container, "Test" renders fine, a longer
+// single-line string does not). Bullets are always multi-line and never
+// showed this. So: bound text only where multi-line wrapping is actually
+// needed (bullets); everything else uses plain floating text over a plain
+// rectangle, which is what rendered correctly before this bug was chased.
+function buildNotesElements(
   notes: AiNotesResponse,
   originX: number,
-  originY: number
-): ExcalidrawElementSkeleton[] {
-  const skeleton: ExcalidrawElementSkeleton[] = [];
-  const cardWidth = 300;
-  const cardHeight = 240;
+  originY: number,
+  convert: ConvertFn
+) {
+  const allElements: ReturnType<ConvertFn> = [];
+  const cardWidth = 320;
   const gap = 24;
   const columns = Math.min(3, Math.max(1, notes.sections.length));
+  const gridWidth = columns * cardWidth + (columns - 1) * gap;
 
-  skeleton.push({
-    type: "text",
-    x: originX,
-    y: originY,
-    text: `📝 ${notes.title}`,
-    fontSize: 28,
-    strokeColor: "#1e1e1e",
-  });
+  allElements.push(
+    ...convert([
+      {
+        type: "text",
+        x: originX,
+        y: originY,
+        text: `📝 ${notes.title}`,
+        fontSize: 28,
+        strokeColor: "#1e1e1e",
+      },
+    ])
+  );
 
-  const gridTop = originY + 60;
+  let rowTop = originY + 60;
 
-  notes.sections.forEach((section, i) => {
-    const col = i % columns;
-    const row = Math.floor(i / columns);
-    const x = originX + col * (cardWidth + gap);
-    const y = gridTop + row * (cardHeight + gap);
-    const color = /^#[0-9a-fA-F]{6}$/.test(section.color) ? section.color : "#3b82f6";
+  for (let row = 0; row * columns < notes.sections.length; row++) {
+    const rowSections = notes.sections.slice(row * columns, row * columns + columns);
+    const headerHeight = 44;
+    let tallestInRow = 0;
 
-    skeleton.push({
-      type: "rectangle",
-      x,
-      y,
-      width: cardWidth,
-      height: cardHeight,
-      backgroundColor: lightenHex(color, 0.85),
-      strokeColor: color,
-      strokeWidth: 2,
-      fillStyle: "solid",
+    rowSections.forEach((section, col) => {
+      const index = row * columns + col + 1;
+      const x = originX + col * (cardWidth + gap);
+      const color = /^#[0-9a-fA-F]{6}$/.test(section.color) ? section.color : "#3b82f6";
+
+      allElements.push(
+        ...convert([
+          {
+            type: "rectangle",
+            x,
+            y: rowTop,
+            width: cardWidth,
+            height: headerHeight,
+            backgroundColor: color,
+            strokeColor: color,
+            fillStyle: "solid",
+          },
+        ])
+      );
+
+      allElements.push(
+        ...convert([
+          {
+            type: "ellipse",
+            x: x + 10,
+            y: rowTop + (headerHeight - 24) / 2,
+            width: 24,
+            height: 24,
+            backgroundColor: "#ffffff",
+            strokeColor: color,
+            fillStyle: "solid",
+            label: { text: String(index), fontSize: 12, strokeColor: color },
+          },
+        ])
+      );
+
+      allElements.push(
+        ...convert([
+          {
+            type: "text",
+            x: x + 44,
+            y: rowTop + (headerHeight - 20) / 2,
+            text: section.heading,
+            fontSize: 16,
+            strokeColor: "#ffffff",
+          },
+        ])
+      );
+
+      const bulletsY = rowTop + headerHeight + 10;
+      const bulletsElements = convert([
+        {
+          type: "rectangle",
+          x,
+          y: bulletsY,
+          width: cardWidth,
+          height: 100,
+          backgroundColor: lightenHex(color, 0.85),
+          strokeColor: color,
+          fillStyle: "solid",
+          label: {
+            text: section.bullets.map((b) => `✓ ${b}`).join("\n"),
+            fontSize: 14,
+            strokeColor: "#1e1e1e",
+            textAlign: "left",
+            verticalAlign: "top",
+          },
+        },
+      ]);
+      const bulletsRect = bulletsElements.find((el) => el.type === "rectangle")!;
+      allElements.push(...bulletsElements);
+
+      tallestInRow = Math.max(tallestInRow, headerHeight + 10 + bulletsRect.height);
     });
 
-    skeleton.push({
-      type: "ellipse",
-      x: x + 14,
-      y: y + 14,
-      width: 32,
-      height: 32,
-      backgroundColor: color,
-      strokeColor: color,
-      fillStyle: "solid",
-      label: { text: String(i + 1), fontSize: 16, strokeColor: "#ffffff" },
-    });
-
-    skeleton.push({
-      type: "text",
-      x: x + 56,
-      y: y + 20,
-      text: section.heading,
-      fontSize: 18,
-      strokeColor: color,
-    });
-
-    skeleton.push({
-      type: "text",
-      x: x + 16,
-      y: y + 64,
-      text: section.bullets.map((b) => `✓ ${b}`).join("\n"),
-      fontSize: 14,
-      strokeColor: "#1e1e1e",
-    });
-  });
-
-  if (notes.tip) {
-    const rows = Math.ceil(notes.sections.length / columns);
-    const tipY = gridTop + rows * (cardHeight + gap);
-    const tipWidth = columns * cardWidth + (columns - 1) * gap;
-    skeleton.push({
-      type: "rectangle",
-      x: originX,
-      y: tipY,
-      width: tipWidth,
-      height: 80,
-      backgroundColor: "#fef9c3",
-      strokeColor: "#eab308",
-      strokeWidth: 2,
-      fillStyle: "solid",
-      label: { text: `💡 Tip: ${notes.tip}`, fontSize: 15 },
-    });
+    rowTop += tallestInRow + gap;
   }
 
-  return skeleton;
+  if (notes.tip) {
+    const tipWidth = gridWidth;
+    const tipHeight = 56;
+    allElements.push(
+      ...convert([
+        {
+          type: "rectangle",
+          x: originX,
+          y: rowTop,
+          width: tipWidth,
+          height: tipHeight,
+          backgroundColor: "#fef9c3",
+          strokeColor: "#eab308",
+          fillStyle: "solid",
+        },
+      ])
+    );
+    allElements.push(
+      ...convert([
+        {
+          type: "text",
+          x: originX + 16,
+          y: rowTop + tipHeight / 2 - 10,
+          text: `💡 Tip: ${notes.tip}`,
+          fontSize: 15,
+          strokeColor: "#92400e",
+        },
+      ])
+    );
+  }
+
+  return allElements;
+}
+
+// Excalidraw's hand-drawn canvas fonts (Excalifont/Virgil) sit in the
+// browser's "unloaded" FontFace state until something forces them to load --
+// document.fonts.ready does NOT trigger that on its own. If we measure/paint
+// AI-generated text before that finishes, the canvas can render with
+// different metrics than what was measured, visibly clipping text that
+// should fit. Force them to load before generating anything.
+async function ensureExcalidrawFontsLoaded() {
+  if (typeof document === "undefined" || !("fonts" in document)) return;
+  const sizes = [14, 15, 16, 18, 28];
+  try {
+    await Promise.all(
+      sizes.flatMap((size) => [
+        document.fonts.load(`${size}px "Excalifont"`),
+        document.fonts.load(`${size}px "Virgil"`),
+      ])
+    );
+  } catch {
+    // Best-effort -- if font loading itself errors, proceed anyway rather
+    // than blocking generation.
+  }
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -270,16 +359,21 @@ export function AiSidebar({
     const notes = data as AiNotesResponse;
     const maxX = Math.max(...elements.map((el) => el.x + el.width));
     const minY = Math.min(...elements.map((el) => el.y));
-    const skeleton = buildNotesSkeleton(notes, maxX + 80, minY);
 
     const { convertToExcalidrawElements } = await import("@excalidraw/excalidraw");
-    const newElements = convertToExcalidrawElements(skeleton);
+    const newElements = buildNotesElements(notes, maxX + 80, minY, convertToExcalidrawElements);
 
     excalidrawAPI.updateScene({
       elements: [...elements, ...newElements],
       captureUpdate: "IMMEDIATELY",
     });
-    excalidrawAPI.scrollToContent(newElements, { fitToContent: true });
+
+    // Defer the fit-to-content scroll a frame: computing it in the same tick
+    // as updateScene can use layout measurements from before Excalidraw has
+    // finished settling the newly bound text, clipping content at the edges.
+    requestAnimationFrame(() => {
+      excalidrawAPI.scrollToContent(newElements, { fitToContent: true });
+    });
   };
 
   const handleGenerateDiagram = async (type: AiDiagramType) => {
@@ -325,6 +419,7 @@ export function AiSidebar({
     setError(null);
 
     try {
+      await ensureExcalidrawFontsLoaded();
       if (isNotes) {
         await handleGenerateNotes();
       } else {
