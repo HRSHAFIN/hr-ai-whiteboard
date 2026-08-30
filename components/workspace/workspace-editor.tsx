@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { ArrowLeft, Check, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Save, Sparkles } from "lucide-react";
 
 import "@excalidraw/excalidraw/index.css";
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -14,6 +14,7 @@ import { renameWhiteboard, saveWhiteboardData } from "@/app/workspace/[projectId
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AiSidebar } from "@/components/workspace/ai-sidebar";
 import { PropertiesToolbar } from "@/components/workspace/properties-toolbar";
 import { WhiteboardQuickTools } from "@/components/workspace/whiteboard-quick-tools";
 import { WhiteboardToolbar } from "@/components/workspace/whiteboard-toolbar";
@@ -42,6 +43,7 @@ export function WorkspaceEditor({
   const [activeTool, setActiveToolState] = useState<string>("selection");
   const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
+  const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   const sceneRef = useRef({
@@ -210,6 +212,21 @@ export function WorkspaceEditor({
           )}
         </div>
       )}
+
+      <Button
+        size="icon-lg"
+        onClick={() => {
+          if (mode !== "whiteboard") handleModeChange("whiteboard");
+          setAiSidebarOpen(true);
+        }}
+        className="fixed right-5 bottom-5 z-30 size-14 rounded-full shadow-lg"
+        title="AI Tools"
+      >
+        <Sparkles className="size-6" />
+        <span className="sr-only">Open AI Tools</span>
+      </Button>
+
+      <AiSidebar open={aiSidebarOpen} onOpenChange={setAiSidebarOpen} excalidrawAPI={excalidrawAPI} />
     </div>
   );
 }
