@@ -92,15 +92,23 @@ export function WorkspaceEditor({
       selectedIds.length === 1
         ? elements.find((el) => el.id === selectedIds[0] && !el.isDeleted) ?? null
         : null;
-    setSelectedElement(active);
-    setToolbarPosition(
-      active
-        ? {
-            x: (active.x + active.width / 2 + appState.scrollX) * appState.zoom.value + appState.offsetLeft,
-            y: (active.y + appState.scrollY) * appState.zoom.value + appState.offsetTop,
-          }
-        : null
-    );
+    setSelectedElement((prev) => {
+      if (!active) return prev === null ? prev : null;
+      if (prev && prev.id === active.id && prev.version === active.version) return prev;
+      return active;
+    });
+
+    const nextPosition = active
+      ? {
+          x: (active.x + active.width / 2 + appState.scrollX) * appState.zoom.value + appState.offsetLeft,
+          y: (active.y + appState.scrollY) * appState.zoom.value + appState.offsetTop,
+        }
+      : null;
+    setToolbarPosition((prev) => {
+      if (!nextPosition) return prev === null ? prev : null;
+      if (prev && prev.x === nextPosition.x && prev.y === nextPosition.y) return prev;
+      return nextPosition;
+    });
 
     scheduleSave();
   };
