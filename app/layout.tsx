@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import Provider from './provider';
 
 export const metadata: Metadata = {
-  title: "Next.js Premium Startup Boilerplate",
-  description: "Created using the ultimate interactive Next.js stack generator CLI.",
+  title: "HR AI Whiteboard",
+  description: "An agentic AI whiteboard for turning ideas into structured diagrams and boards.",
 };
 
 const isClerkConfigured =
