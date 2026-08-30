@@ -35,6 +35,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
   const type = (typeof body?.type === "string" ? body.type : "diagram") as AiDiagramType;
+  const existing = body?.existing as AiDiagramResponse | undefined;
 
   if (!prompt) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
@@ -42,12 +43,16 @@ export async function POST(req: Request) {
 
   const guidance = TYPE_GUIDANCE[type] ?? TYPE_GUIDANCE.diagram;
 
+  const contents = existing
+    ? `Here is the current diagram as JSON:\n${JSON.stringify(existing)}\n\nUpdate it to: ${prompt}\n\nReturn the complete, updated diagram (all nodes and edges, not just the changes), reusing existing "id" values for nodes you keep so the layout stays stable.`
+    : `Create ${guidance} for: ${prompt}`;
+
   try {
     const ai = new GoogleGenAI({ apiKey });
 
     const result = await ai.models.generateContent({
       model: "gemini-3.7-flash",
-      contents: `Create ${guidance} for: ${prompt}`,
+      contents,
       config: {
         systemInstruction:
           "You design simple node-and-edge diagrams for a whiteboard app. Lay nodes out with no overlap on a canvas roughly 1200 wide and 800 tall, with at least 40px gaps between shapes. Shape widths should be 120-260 and heights 60-120. Keep labels under 6 words. Return between 3 and 12 nodes. Use hex colors for the optional node color field.",

@@ -28,9 +28,11 @@ import type { Whiteboard } from "@/db/schema";
 export function ProjectCard({
   board,
   archived = false,
+  onChanged,
 }: {
   board: Whiteboard;
   archived?: boolean;
+  onChanged?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -78,12 +80,13 @@ export function ProjectCard({
           size="icon-sm"
           disabled={isPending}
           onClick={() =>
-            startTransition(() => {
+            startTransition(async () => {
               if (archived) {
-                restoreWhiteboard(board.id);
+                await restoreWhiteboard(board.id);
               } else {
-                archiveWhiteboard(board.id);
+                await archiveWhiteboard(board.id);
               }
+              onChanged?.();
             })
           }
         >
@@ -99,7 +102,12 @@ export function ProjectCard({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => startTransition(() => deleteWhiteboard(board.id))}
+              onClick={() =>
+                startTransition(async () => {
+                  await deleteWhiteboard(board.id);
+                  onChanged?.();
+                })
+              }
             >
               <Trash2 />
               Delete

@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { ArrowLeft, Check, Loader2, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Download, Loader2, Save, Sparkles } from "lucide-react";
 
 import "@excalidraw/excalidraw/index.css";
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -115,6 +115,27 @@ export function WorkspaceEditor({
     scheduleSave();
   };
 
+  const handleExportImage = async () => {
+    if (!excalidrawAPI) return;
+    const elements = excalidrawAPI.getSceneElements();
+    if (elements.length === 0) return;
+
+    const { exportToBlob } = await import("@excalidraw/excalidraw");
+    const blob = await exportToBlob({
+      elements,
+      appState: excalidrawAPI.getAppState(),
+      files: excalidrawAPI.getFiles(),
+      mimeType: "image/png",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title || "whiteboard"}.png`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleTitleBlur = () => {
     const trimmed = title.trim();
     if (!trimmed || trimmed === initialTitle) return;
@@ -172,6 +193,12 @@ export function WorkspaceEditor({
               </>
             )}
           </span>
+          {mode === "whiteboard" && (
+            <Button variant="outline" size="sm" onClick={handleExportImage}>
+              <Download />
+              Export
+            </Button>
+          )}
           <Button size="sm" onClick={handleManualSave}>
             <Save />
             Save

@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Loader2,
   Sparkles,
+  Wand2,
   Workflow,
   GitBranch,
   Boxes,
@@ -89,12 +90,19 @@ export function AiSidebar({
   excalidrawAPI: ExcalidrawImperativeAPI | null;
 }) {
   const [selectedType, setSelectedType] = useState<AiDiagramType | null>(null);
+  const [isImproving, setIsImproving] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastGeneration, setLastGeneration] = useState<{
+    type: AiDiagramType;
+    diagram: AiDiagramResponse;
+    elementIds: string[];
+  } | null>(null);
 
   const reset = () => {
     setSelectedType(null);
+    setIsImproving(false);
     setPrompt("");
     setError(null);
   };
@@ -107,7 +115,8 @@ export function AiSidebar({
   };
 
   const handleGenerate = async () => {
-    if (!selectedType || !prompt.trim() || !excalidrawAPI) return;
+    const type = isImproving ? lastGeneration?.type : selectedType;
+    if (!type || !prompt.trim() || !excalidrawAPI) return;
 
     setIsGenerating(true);
     setError(null);
@@ -116,7 +125,11 @@ export function AiSidebar({
       const res = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: selectedType, prompt: prompt.trim() }),
+        body: JSON.stringify({
+          type,
+          prompt: prompt.trim(),
+          ...(isImproving && lastGeneration ? { existing: lastGeneration.diagram } : {}),
+        }),
       });
 
       const data = await res.json();
@@ -124,19 +137,24 @@ export function AiSidebar({
         throw new Error(data.error || "AI generation failed");
       }
 
-      const { nodes, edges } = data as AiDiagramResponse;
-      const skeleton = buildSkeleton(nodes, edges);
+      const diagram = data as AiDiagramResponse;
+      const skeleton = buildSkeleton(diagram.nodes, diagram.edges);
 
       const { convertToExcalidrawElements } = await import("@excalidraw/excalidraw");
       const newElements = convertToExcalidrawElements(skeleton);
 
-      const existing = excalidrawAPI.getSceneElements();
+      const previousIds = new Set(lastGeneration?.elementIds ?? []);
+      const existing = excalidrawAPI
+        .getSceneElements()
+        .map((el) => (isImproving && previousIds.has(el.id) ? { ...el, isDeleted: true } : el));
+
       excalidrawAPI.updateScene({
         elements: [...existing, ...newElements],
         captureUpdate: "IMMEDIATELY",
       });
       excalidrawAPI.scrollToContent(newElements, { fitToContent: true });
 
+      setLastGeneration({ type, diagram, elementIds: newElements.map((el) => el.id) });
       handleOpenChange(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI generation failed");
@@ -156,8 +174,17 @@ export function AiSidebar({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-auto px-4 pb-4">
-          {!selectedType ? (
+          {!selectedType && !isImproving ? (
             <div className="flex flex-col gap-1.5">
+              {lastGeneration && (
+                <button
+                  onClick={() => setIsImproving(true)}
+                  className="mb-2 flex items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2.5 text-left text-sm font-medium hover:bg-primary/10"
+                >
+                  <Wand2 className="size-4 text-primary" />
+                  Improve current diagram
+                </button>
+              )}
               <p className="mb-1 text-xs text-muted-foreground">
                 Pick the type of content you want AI to generate.
               </p>
@@ -178,7 +205,10 @@ export function AiSidebar({
           ) : (
             <div className="flex flex-1 flex-col gap-3">
               <button
-                onClick={() => setSelectedType(null)}
+                onClick={() => {
+                  setSelectedType(null);
+                  setIsImproving(false);
+                }}
                 className="flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="size-3.5" />
@@ -186,14 +216,20 @@ export function AiSidebar({
               </button>
 
               <p className="text-sm font-medium">
-                {AI_DIAGRAM_TYPES.find((t) => t.value === selectedType)?.label}
+                {isImproving
+                  ? "Improve current diagram"
+                  : AI_DIAGRAM_TYPES.find((t) => t.value === selectedType)?.label}
               </p>
 
               <Textarea
                 autoFocus
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder={PROMPT_EXAMPLES[selectedType] ?? "Tell AI what you want..."}
+                placeholder={
+                  isImproving
+                    ? "e.g. Add an error-handling step after validation"
+                    : (selectedType && PROMPT_EXAMPLES[selectedType]) ?? "Tell AI what you want..."
+                }
                 className="min-h-32"
                 disabled={isGenerating}
               />
@@ -206,7 +242,7 @@ export function AiSidebar({
                 className={cn("mt-auto")}
               >
                 {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                {isGenerating ? "Generating..." : "Generate with AI"}
+                {isGenerating ? "Generating..." : isImproving ? "Improve with AI" : "Generate with AI"}
               </Button>
             </div>
           )}
