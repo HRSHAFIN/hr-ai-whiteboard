@@ -127,3 +127,10 @@
     @apply font-sans;
     }
 }
+
+/* Custom whiteboard chrome: hide Excalidraw's default shape toolbar and
+   bottom-left zoom/undo cluster in favor of our own left + floating toolbars. */
+.custom-whiteboard-shell .App-toolbar-container,
+.custom-whiteboard-shell .layer-ui__wrapper__footer-left {
+  display: none !important;
+}
