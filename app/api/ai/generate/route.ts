@@ -24,11 +24,13 @@ const TYPE_GUIDANCE: Record<Exclude<AiDiagramType, "notes">, string> = {
     "a mind map with one central topic ellipse connected to several surrounding idea ellipses",
 };
 
-// Preferred model first, then a fallback used only if the preferred one is
-// unavailable. gemini-3.7-flash's free-tier quota is only 20 requests/day
-// and gets exhausted quickly, so gemini-3.6-flash goes first -- trying the
-// already-exhausted model first would waste the first attempt every time.
-const MODELS = ["gemini-3.6-flash", "gemini-3.7-flash"] as const;
+// Each model's free-tier quota is only 20 requests/day and is tracked
+// separately per model, so a 3rd, different model is a genuinely separate
+// budget rather than just another attempt against the same exhausted pool.
+// gemini-3.6-flash goes first since it's the one most likely to still have
+// quota left; gemini-3.1-flash-lite is the last resort once both flash
+// models for today are used up.
+const MODELS = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.1-flash-lite"] as const;
 
 // The SDK retries failed requests up to 5x with backoff by default (up to
 // ~90s+ on a persistent 503), which blew past our own maxDuration and got
