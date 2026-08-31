@@ -18,6 +18,7 @@ import { AiSidebar } from "@/components/workspace/ai-sidebar";
 import { PropertiesToolbar } from "@/components/workspace/properties-toolbar";
 import { WhiteboardToolbar } from "@/components/workspace/whiteboard-toolbar";
 import { WorkspaceUtilityBar } from "@/components/workspace/workspace-utility-bar";
+import { AI_DOC_TOOLS, type AiDocToolType } from "@/lib/ai-doc-types";
 import { cn } from "@/lib/utils";
 import type { WhiteboardData, WorkspaceMode } from "@/lib/whiteboard-types";
 
@@ -44,6 +45,7 @@ export function WorkspaceEditor({
   const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
+  const [docPreview, setDocPreview] = useState<{ tool: AiDocToolType; text: string } | null>(null);
   const [, startTransition] = useTransition();
 
   const sceneRef = useRef({
@@ -139,6 +141,18 @@ export function WorkspaceEditor({
     scheduleSave();
   };
 
+  const handleDocRewrite = (tool: AiDocToolType, text: string) => {
+    setDocPreview({ tool, text });
+  };
+
+  const applyDocPreview = () => {
+    if (!docPreview) return;
+    handleDocChange(docPreview.text);
+    setDocPreview(null);
+  };
+
+  const discardDocPreview = () => setDocPreview(null);
+
   const handleExportImage = async () => {
     if (!excalidrawAPI) return;
     const elements = excalidrawAPI.getSceneElements();
@@ -233,12 +247,48 @@ export function WorkspaceEditor({
 
       {mode === "doc" ? (
         <div className="flex-1 overflow-auto p-6">
-          <Textarea
-            value={doc}
-            onChange={(e) => handleDocChange(e.target.value)}
-            placeholder="Write your notes here..."
-            className="h-full min-h-[60vh] w-full max-w-3xl resize-none border-none text-base shadow-none focus-visible:ring-0"
-          />
+          {docPreview ? (
+            <div className="flex h-full min-h-[60vh] w-full max-w-6xl flex-col gap-4 md:flex-row">
+              <div className="flex min-h-[40vh] flex-1 flex-col gap-2">
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Original
+                </p>
+                <Textarea
+                  value={doc}
+                  onChange={(e) => handleDocChange(e.target.value)}
+                  className="h-full min-h-[40vh] flex-1 resize-none text-base shadow-none focus-visible:ring-0"
+                />
+              </div>
+
+              <div className="flex min-h-[40vh] flex-1 flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                    {AI_DOC_TOOLS.find((t) => t.value === docPreview.tool)?.label ?? "Result"}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={discardDocPreview}>
+                      Discard
+                    </Button>
+                    <Button size="sm" onClick={applyDocPreview}>
+                      Use this version
+                    </Button>
+                  </div>
+                </div>
+                <Textarea
+                  value={docPreview.text}
+                  readOnly
+                  className="h-full min-h-[40vh] flex-1 resize-none border-primary/30 bg-primary/5 text-base shadow-none focus-visible:ring-0"
+                />
+              </div>
+            </div>
+          ) : (
+            <Textarea
+              value={doc}
+              onChange={(e) => handleDocChange(e.target.value)}
+              placeholder="Write your notes here..."
+              className="h-full min-h-[60vh] w-full max-w-3xl resize-none border-none text-base shadow-none focus-visible:ring-0"
+            />
+          )}
         </div>
       ) : (
         <div className="custom-whiteboard-shell relative flex-1">
@@ -281,7 +331,7 @@ export function WorkspaceEditor({
         excalidrawAPI={excalidrawAPI}
         mode={mode}
         docText={doc}
-        onDocChange={handleDocChange}
+        onDocRewrite={handleDocRewrite}
       />
     </div>
   );

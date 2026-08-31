@@ -299,14 +299,14 @@ export function AiSidebar({
   excalidrawAPI,
   mode,
   docText,
-  onDocChange,
+  onDocRewrite,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   excalidrawAPI: ExcalidrawImperativeAPI | null;
   mode: WorkspaceMode;
   docText: string;
-  onDocChange: (text: string) => void;
+  onDocRewrite: (tool: AiDocToolType, text: string) => void;
 }) {
   const [selectedType, setSelectedType] = useState<AiDiagramType | AiDocToolType | null>(null);
   const [isImproving, setIsImproving] = useState(false);
@@ -394,7 +394,7 @@ export function AiSidebar({
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "AI generation failed");
 
-    onDocChange((data as AiRewriteResponse).text);
+    onDocRewrite(type, (data as AiRewriteResponse).text);
   };
 
   const handleGenerateDiagram = async (type: AiDiagramType) => {
