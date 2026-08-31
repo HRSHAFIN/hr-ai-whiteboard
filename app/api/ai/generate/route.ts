@@ -24,9 +24,10 @@ const TYPE_GUIDANCE: Record<Exclude<AiDiagramType, "notes">, string> = {
 };
 
 // Preferred model first, then a fallback used only if the preferred one is
-// unavailable (e.g. a "high demand" 503) -- gemini-3.7-flash is very new and
-// still capacity-constrained at times, so fall back rather than fail.
-const MODELS = ["gemini-3.7-flash", "gemini-3.6-flash"] as const;
+// unavailable. gemini-3.7-flash's free-tier quota is only 20 requests/day
+// and gets exhausted quickly, so gemini-3.6-flash goes first -- trying the
+// already-exhausted model first would waste the first attempt every time.
+const MODELS = ["gemini-3.6-flash", "gemini-3.7-flash"] as const;
 
 // The SDK retries failed requests up to 5x with backoff by default (up to
 // ~90s+ on a persistent 503), which blew past our own maxDuration and got
