@@ -279,7 +279,10 @@ export default function Home() {
       </section>
 
       <footer className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-neutral-500">
-        HR AI Whiteboard — build clearer ideas, together with AI.
+        <p>HR AI Whiteboard — build clearer ideas, together with AI.</p>
+        <p className="mt-2 text-xs text-neutral-400">
+          © {new Date().getFullYear()} Md. Hasibur Rahman. All rights reserved.
+        </p>
       </footer>
     </main>
   );
