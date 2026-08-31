@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Circle,
   Diamond,
@@ -12,8 +13,11 @@ import {
   MousePointer2,
   MoveUpRight,
   Pencil,
+  Redo2,
   Square,
+  Trash2,
   Type,
+  Undo2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,8 +25,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmojiIconsPopover } from "@/components/workspace/emoji-icons-popover";
+import { NotesPopover } from "@/components/workspace/notes-popover";
 import { cn } from "@/lib/utils";
 import type { ExcalidrawImperativeAPI, ToolType } from "@excalidraw/excalidraw/types";
 
@@ -52,6 +59,42 @@ const TOOL_COLORS: Partial<Record<ToolType, string>> = {
   eraser: "text-rose-600",
 };
 
+const QUICK_COLORS = [
+  "#1e1e1e",
+  "#e03131",
+  "#f08c00",
+  "#2f9e44",
+  "#0c8599",
+  "#1971c2",
+  "#9c36b5",
+];
+
+const STROKE_WIDTHS = [1, 2, 4];
+
+function nextInCycle<T>(list: T[], current: T): T {
+  const idx = list.indexOf(current);
+  return list[(idx + 1) % list.length];
+}
+
+// Excalidraw's own keydown handler is a React onKeyDown prop delegated on
+// the ".excalidraw" container -- an event dispatched at window/document
+// never traverses that container, so it's silently ignored. Dispatching
+// directly on the container (with bubbles: true) is what actually reaches it.
+function fireHistoryShortcut(redo: boolean) {
+  const container = document.querySelector(".excalidraw");
+  if (!container) return;
+  container.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "z",
+      code: "KeyZ",
+      ctrlKey: true,
+      metaKey: true,
+      shiftKey: redo,
+      bubbles: true,
+    })
+  );
+}
+
 export function WhiteboardToolbar({
   excalidrawAPI,
   activeTool,
@@ -59,29 +102,96 @@ export function WhiteboardToolbar({
   excalidrawAPI: ExcalidrawImperativeAPI | null;
   activeTool: string;
 }) {
+  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [strokeColor, setStrokeColor] = useState(QUICK_COLORS[0]);
+
   const setTool = (type: ToolType) => {
     excalidrawAPI?.setActiveTool({ type });
   };
 
+  const setColor = (color: string) => {
+    setStrokeColor(color);
+    excalidrawAPI?.updateScene({ appState: { currentItemStrokeColor: color } });
+  };
+
+  const cycleStrokeWidth = () => {
+    const next = nextInCycle(STROKE_WIDTHS, strokeWidth);
+    setStrokeWidth(next);
+    excalidrawAPI?.updateScene({ appState: { currentItemStrokeWidth: next } });
+  };
+
+  const clearCanvas = () => {
+    if (window.confirm("Clear the entire canvas? This can be undone with Ctrl+Z.")) {
+      excalidrawAPI?.updateScene({ elements: [] });
+    }
+  };
+
   return (
-    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 rounded-xl border bg-popover p-1 shadow-lg">
+    <div className="absolute top-3 left-3 z-10 flex max-h-[calc(100vh-5.5rem)] flex-col gap-1 overflow-y-auto rounded-xl border bg-popover p-1 shadow-lg">
       {TOOLS.map((tool) => (
         <Button
           key={tool.type}
           variant={activeTool === tool.type ? "secondary" : "ghost"}
-          size="icon-sm"
+          size="icon-lg"
           title={tool.label}
           onClick={() => setTool(tool.type)}
           className={cn(activeTool === tool.type && "ring-1 ring-primary/40")}
         >
-          <tool.icon className={TOOL_COLORS[tool.type]} />
+          <tool.icon className={cn("size-5", TOOL_COLORS[tool.type])} />
           <span className="sr-only">{tool.label}</span>
         </Button>
       ))}
 
+      <div className="my-1 h-px w-full bg-border" />
+
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        title="Brush size"
+        onClick={cycleStrokeWidth}
+        className="text-xs font-semibold"
+      >
+        {strokeWidth}px
+      </Button>
+
+      <div className="my-1 h-px w-full bg-border" />
+
+      <div className="grid grid-cols-2 gap-1 p-0.5">
+        {QUICK_COLORS.map((color) => (
+          <button
+            key={color}
+            title={color}
+            onClick={() => setColor(color)}
+            style={{ backgroundColor: color }}
+            className={cn(
+              "size-4 shrink-0 rounded-full ring-1 ring-foreground/10 transition-transform hover:scale-110",
+              strokeColor === color && "ring-2 ring-primary"
+            )}
+          />
+        ))}
+      </div>
+
+      <div className="my-1 h-px w-full bg-border" />
+
+      <NotesPopover excalidrawAPI={excalidrawAPI} />
+      <EmojiIconsPopover excalidrawAPI={excalidrawAPI} />
+
+      <div className="my-1 h-px w-full bg-border" />
+
+      <Button variant="ghost" size="icon-lg" title="Undo" onClick={() => fireHistoryShortcut(false)}>
+        <Undo2 className="size-5" />
+        <span className="sr-only">Undo</span>
+      </Button>
+      <Button variant="ghost" size="icon-lg" title="Redo" onClick={() => fireHistoryShortcut(true)}>
+        <Redo2 className="size-5" />
+        <span className="sr-only">Redo</span>
+      </Button>
+
+      <div className="my-1 h-px w-full bg-border" />
+
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" title="More tools" />}>
-          <MoreHorizontal className="text-muted-foreground" />
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" title="More tools" />}>
+          <MoreHorizontal className="size-5 text-muted-foreground" />
           <span className="sr-only">More tools</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
@@ -92,6 +202,11 @@ export function WhiteboardToolbar({
           <DropdownMenuItem onClick={() => setTool("image")}>
             <ImageIcon />
             Image
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={clearCanvas}>
+            <Trash2 />
+            Clear canvas
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

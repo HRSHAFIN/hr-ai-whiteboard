@@ -115,11 +115,11 @@ export function EmojiIconsPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-sm" title="Emoji" />}>
-        <Smile />
+      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Emoji" />}>
+        <Smile className="size-5" />
         <span className="sr-only">Emoji</span>
       </PopoverTrigger>
-      <PopoverContent side="top" align="center" className="w-80">
+      <PopoverContent side="right" align="start" className="w-80">
         <PopoverHeader>
           <PopoverTitle>Emoji and icons</PopoverTitle>
           <PopoverDescription>Choose from the picker to add to the canvas.</PopoverDescription>

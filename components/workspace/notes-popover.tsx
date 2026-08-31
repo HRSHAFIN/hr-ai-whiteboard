@@ -53,11 +53,11 @@ export function NotesPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-sm" title="Notes" />}>
-        <NotebookPen />
+      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Notes" />}>
+        <NotebookPen className="size-5" />
         <span className="sr-only">Notes</span>
       </PopoverTrigger>
-      <PopoverContent side="top" align="center" className="w-72">
+      <PopoverContent side="right" align="start" className="w-72">
         <PopoverHeader>
           <PopoverTitle>Add notes</PopoverTitle>
           <PopoverDescription>Pick a blank note style for the whiteboard.</PopoverDescription>
