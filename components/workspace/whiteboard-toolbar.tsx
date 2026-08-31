@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiIconsPopover } from "@/components/workspace/emoji-icons-popover";
 import { NotesPopover } from "@/components/workspace/notes-popover";
 import { cn } from "@/lib/utils";
@@ -156,20 +157,33 @@ export function WhiteboardToolbar({
 
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
-      <div className="grid grid-cols-2 gap-1 p-0.5">
-        {QUICK_COLORS.map((color) => (
-          <button
-            key={color}
-            title={color}
-            onClick={() => setColor(color)}
-            style={{ backgroundColor: color }}
-            className={cn(
-              "size-3.5 shrink-0 rounded-full ring-1 ring-foreground/10 transition-transform hover:scale-110 sm:size-4",
-              strokeColor === color && "ring-2 ring-primary"
-            )}
+      <Popover>
+        <PopoverTrigger
+          render={<Button variant="ghost" size="icon-lg" title="Stroke color" className="size-8 sm:size-9" />}
+        >
+          <span
+            style={{ backgroundColor: strokeColor }}
+            className="size-4 shrink-0 rounded-full ring-1 ring-foreground/15 sm:size-4.5"
           />
-        ))}
-      </div>
+          <span className="sr-only">Stroke color</span>
+        </PopoverTrigger>
+        <PopoverContent side="right" align="start" className="w-auto p-2">
+          <div className="grid grid-cols-4 gap-1.5">
+            {QUICK_COLORS.map((color) => (
+              <button
+                key={color}
+                title={color}
+                onClick={() => setColor(color)}
+                style={{ backgroundColor: color }}
+                className={cn(
+                  "size-6 shrink-0 rounded-full ring-1 ring-foreground/10 transition-transform hover:scale-110",
+                  strokeColor === color && "ring-2 ring-primary"
+                )}
+              />
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
 
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
