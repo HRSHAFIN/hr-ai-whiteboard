@@ -9,8 +9,10 @@ import {
   Loader2,
   MonitorSmartphone,
   NotebookText,
+  Repeat2,
   Smartphone,
   Sparkles,
+  Wand2,
   Workflow,
 } from "lucide-react";
 
@@ -31,7 +33,9 @@ import {
   type AiDiagramResponse,
   type AiDiagramType,
 } from "@/lib/ai-diagram-types";
+import { AI_DOC_TOOLS, type AiDocToolType, type AiRewriteResponse } from "@/lib/ai-doc-types";
 import type { AiNotesResponse } from "@/lib/ai-notes-types";
+import type { WorkspaceMode } from "@/lib/whiteboard-types";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/data/transform";
 
@@ -61,6 +65,21 @@ const PROMPT_EXAMPLES: Partial<Record<AiDiagramType, string>> = {
   "architecture-diagram": "Show a typical web app architecture with a client, API, and database",
   "mind-map": "Brainstorm ideas for a productivity app",
   notes: "Anything to focus on? (optional)",
+};
+
+const DOC_TOOL_ICONS: Record<AiDocToolType, typeof Repeat2> = {
+  paraphrase: Repeat2,
+  humanize: Wand2,
+};
+
+const DOC_TOOL_BADGE_COLORS: Record<AiDocToolType, string> = {
+  paraphrase: "bg-teal-50 text-teal-600",
+  humanize: "bg-rose-50 text-rose-600",
+};
+
+const DOC_PROMPT_EXAMPLES: Record<AiDocToolType, string> = {
+  paraphrase: "e.g. Make it more concise (optional)",
+  humanize: "e.g. Make it sound more casual (optional)",
 };
 
 function buildSkeleton(nodes: AiDiagramNode[], edges: AiDiagramEdge[]): ExcalidrawElementSkeleton[] {
@@ -278,12 +297,18 @@ export function AiSidebar({
   open,
   onOpenChange,
   excalidrawAPI,
+  mode,
+  docText,
+  onDocChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   excalidrawAPI: ExcalidrawImperativeAPI | null;
+  mode: WorkspaceMode;
+  docText: string;
+  onDocChange: (text: string) => void;
 }) {
-  const [selectedType, setSelectedType] = useState<AiDiagramType | null>(null);
+  const [selectedType, setSelectedType] = useState<AiDiagramType | AiDocToolType | null>(null);
   const [isImproving, setIsImproving] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -294,8 +319,11 @@ export function AiSidebar({
     elementIds: string[];
   } | null>(null);
 
+  const isDocMode = mode === "doc";
   const activeType = isImproving ? lastGeneration?.type ?? null : selectedType;
   const isNotes = activeType === "notes";
+  const isDocToolType = activeType === "paraphrase" || activeType === "humanize";
+  const promptOptional = isNotes || isDocToolType;
 
   const reset = () => {
     setSelectedType(null);
@@ -355,6 +383,20 @@ export function AiSidebar({
     });
   };
 
+  const handleGenerateDocTool = async (type: AiDocToolType) => {
+    if (!docText.trim()) throw new Error("Write something in the doc first.");
+
+    const res = await fetch("/api/ai/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, text: docText, prompt: prompt.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "AI generation failed");
+
+    onDocChange((data as AiRewriteResponse).text);
+  };
+
   const handleGenerateDiagram = async (type: AiDiagramType) => {
     if (!excalidrawAPI) throw new Error("Canvas isn't ready yet.");
 
@@ -391,18 +433,23 @@ export function AiSidebar({
   };
 
   const handleGenerate = async () => {
-    if (!activeType || !excalidrawAPI) return;
-    if (!isNotes && !prompt.trim()) return;
+    if (!activeType) return;
+    if (!isDocToolType && !excalidrawAPI) return;
+    if (!promptOptional && !prompt.trim()) return;
 
     setIsGenerating(true);
     setError(null);
 
     try {
-      await ensureExcalidrawFontsLoaded();
-      if (isNotes) {
-        await handleGenerateNotes();
+      if (isDocToolType) {
+        await handleGenerateDocTool(activeType as AiDocToolType);
       } else {
-        await handleGenerateDiagram(activeType);
+        await ensureExcalidrawFontsLoaded();
+        if (isNotes) {
+          await handleGenerateNotes();
+        } else {
+          await handleGenerateDiagram(activeType as AiDiagramType);
+        }
       }
       handleOpenChange(false);
     } catch (err) {
@@ -423,7 +470,7 @@ export function AiSidebar({
             <span className="flex flex-col">
               <span>AI Helper</span>
               <span className="text-xs font-normal text-muted-foreground">
-                Turn your ideas into visual content
+                {isDocMode ? "Rewrite and polish your writing" : "Turn your ideas into visual content"}
               </span>
             </span>
           </SheetTitle>
@@ -432,7 +479,7 @@ export function AiSidebar({
         <div className="flex flex-1 flex-col gap-4 overflow-auto px-4 pb-4">
           {!selectedType && !isImproving ? (
             <div className="flex flex-col gap-3">
-              {lastGeneration && (
+              {!isDocMode && lastGeneration && (
                 <button
                   onClick={() => setIsImproving(true)}
                   className="flex items-center gap-2.5 rounded-xl border border-primary/40 bg-primary/5 p-3 text-left text-sm font-medium hover:bg-primary/10"
@@ -445,32 +492,56 @@ export function AiSidebar({
               )}
 
               <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                What do you want to create?
+                {isDocMode ? "What do you want to do?" : "What do you want to create?"}
               </p>
               <div className="grid grid-cols-2 gap-2.5">
-                {AI_DIAGRAM_TYPES.map((tool) => {
-                  const Icon = TYPE_ICONS[tool.value];
-                  return (
-                    <button
-                      key={tool.value}
-                      onClick={() => setSelectedType(tool.value)}
-                      className="flex flex-col items-start gap-2 rounded-xl border p-3 text-left hover:border-primary/40 hover:bg-muted/50"
-                    >
-                      <span
-                        className={cn(
-                          "flex size-9 items-center justify-center rounded-lg",
-                          TYPE_BADGE_COLORS[tool.value]
-                        )}
-                      >
-                        <Icon className="size-4.5" />
-                      </span>
-                      <span className="flex flex-col gap-0.5">
-                        <span className="text-sm font-semibold">{tool.label}</span>
-                        <span className="text-xs text-muted-foreground">{tool.description}</span>
-                      </span>
-                    </button>
-                  );
-                })}
+                {isDocMode
+                  ? AI_DOC_TOOLS.map((tool) => {
+                      const Icon = DOC_TOOL_ICONS[tool.value];
+                      return (
+                        <button
+                          key={tool.value}
+                          onClick={() => setSelectedType(tool.value)}
+                          className="flex flex-col items-start gap-2 rounded-xl border p-3 text-left hover:border-primary/40 hover:bg-muted/50"
+                        >
+                          <span
+                            className={cn(
+                              "flex size-9 items-center justify-center rounded-lg",
+                              DOC_TOOL_BADGE_COLORS[tool.value]
+                            )}
+                          >
+                            <Icon className="size-4.5" />
+                          </span>
+                          <span className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold">{tool.label}</span>
+                            <span className="text-xs text-muted-foreground">{tool.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  : AI_DIAGRAM_TYPES.map((tool) => {
+                      const Icon = TYPE_ICONS[tool.value];
+                      return (
+                        <button
+                          key={tool.value}
+                          onClick={() => setSelectedType(tool.value)}
+                          className="flex flex-col items-start gap-2 rounded-xl border p-3 text-left hover:border-primary/40 hover:bg-muted/50"
+                        >
+                          <span
+                            className={cn(
+                              "flex size-9 items-center justify-center rounded-lg",
+                              TYPE_BADGE_COLORS[tool.value]
+                            )}
+                          >
+                            <Icon className="size-4.5" />
+                          </span>
+                          <span className="flex flex-col gap-0.5">
+                            <span className="text-sm font-semibold">{tool.label}</span>
+                            <span className="text-xs text-muted-foreground">{tool.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
               </div>
             </div>
           ) : (
@@ -489,6 +560,8 @@ export function AiSidebar({
                 <p className="text-sm font-semibold">
                   {isImproving
                     ? "Improve current diagram"
+                    : isDocToolType
+                    ? AI_DOC_TOOLS.find((t) => t.value === selectedType)?.label
                     : "Describe your idea"}
                 </p>
                 <Sparkles className="size-3.5 text-primary" />
@@ -496,6 +569,8 @@ export function AiSidebar({
               <p className="-mt-2 text-xs text-muted-foreground">
                 {isNotes
                   ? "AI will read the current canvas and add styled notes next to it."
+                  : isDocToolType
+                  ? "AI will rewrite the text in your doc. Extra instructions below are optional."
                   : "AI will generate it directly on your canvas."}
               </p>
 
@@ -506,7 +581,9 @@ export function AiSidebar({
                 placeholder={
                   isImproving
                     ? "e.g. Add an error-handling step after validation"
-                    : (activeType && PROMPT_EXAMPLES[activeType]) ?? "Tell AI what you want..."
+                    : isDocToolType
+                    ? DOC_PROMPT_EXAMPLES[activeType as AiDocToolType]
+                    : (activeType && PROMPT_EXAMPLES[activeType as AiDiagramType]) ?? "Tell AI what you want..."
                 }
                 className="min-h-32"
                 disabled={isGenerating}
@@ -516,13 +593,15 @@ export function AiSidebar({
 
               <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
                 <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {isImproving
+                  {isDocMode
+                    ? AI_DOC_TOOLS.find((t) => t.value === selectedType)?.label
+                    : isImproving
                     ? AI_DIAGRAM_TYPES.find((t) => t.value === lastGeneration?.type)?.label
                     : AI_DIAGRAM_TYPES.find((t) => t.value === selectedType)?.label}
                 </span>
                 <Button
                   onClick={handleGenerate}
-                  disabled={(!isNotes && !prompt.trim()) || isGenerating}
+                  disabled={(!promptOptional && !prompt.trim()) || isGenerating}
                   className="rounded-full"
                 >
                   {isGenerating ? <Loader2 className="animate-spin" /> : <ArrowUp />}

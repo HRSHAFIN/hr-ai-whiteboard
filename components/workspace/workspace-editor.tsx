@@ -255,10 +255,7 @@ export function WorkspaceEditor({
 
       <Button
         size="icon-lg"
-        onClick={() => {
-          if (mode !== "whiteboard") handleModeChange("whiteboard");
-          setAiSidebarOpen(true);
-        }}
+        onClick={() => setAiSidebarOpen(true)}
         className="fixed right-5 bottom-5 z-30 size-14 rounded-full shadow-lg"
         title="AI Tools"
       >
@@ -266,7 +263,14 @@ export function WorkspaceEditor({
         <span className="sr-only">Open AI Tools</span>
       </Button>
 
-      <AiSidebar open={aiSidebarOpen} onOpenChange={setAiSidebarOpen} excalidrawAPI={excalidrawAPI} />
+      <AiSidebar
+        open={aiSidebarOpen}
+        onOpenChange={setAiSidebarOpen}
+        excalidrawAPI={excalidrawAPI}
+        mode={mode}
+        docText={doc}
+        onDocChange={handleDocChange}
+      />
     </div>
   );
 }

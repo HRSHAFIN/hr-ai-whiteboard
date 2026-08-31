@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
 import type { AiDiagramResponse, AiDiagramType } from "@/lib/ai-diagram-types";
+import type { AiDocToolType, AiRewriteResponse } from "@/lib/ai-doc-types";
 import type { AiNotesResponse } from "@/lib/ai-notes-types";
 
 // Gemini can take longer than the platform's default function timeout,
@@ -104,6 +105,28 @@ const NOTES_CONFIG = {
   },
 } as const;
 
+const REWRITE_GUIDANCE: Record<AiDocToolType, string> = {
+  paraphrase:
+    "Rewrite the user's text so it says the same thing in different words -- vary sentence structure and vocabulary, but preserve the original meaning, facts, tone, and approximate length. Do not add commentary, headings, or quotation marks around the result.",
+  humanize:
+    'Rewrite the user\'s text so it reads like a real person wrote it by hand, not an AI: vary sentence length and rhythm, use natural contractions, cut robotic phrasing and repetitive transitions (e.g. "moreover", "in conclusion", "furthermore"). Preserve the original meaning, facts, and approximate length. Do not add commentary, headings, or quotation marks around the result.',
+};
+
+const REWRITE_SYSTEM_INSTRUCTION: Record<AiDocToolType, string> = {
+  paraphrase: "You are a paraphrasing assistant built into a writing app.",
+  humanize: "You are a writing assistant that makes AI-generated text sound naturally human.",
+};
+
+const REWRITE_CONFIG = {
+  httpOptions: HTTP_OPTIONS,
+  responseMimeType: "application/json",
+  responseSchema: {
+    type: "OBJECT",
+    properties: { text: { type: "STRING" } },
+    required: ["text"],
+  },
+} as const;
+
 function isHighDemandError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return (
@@ -169,8 +192,40 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
-  const type = (typeof body?.type === "string" ? body.type : "diagram") as AiDiagramType;
+  const type: string = typeof body?.type === "string" ? body.type : "diagram";
   const ai = new GoogleGenAI({ apiKey });
+
+  if (type === "paraphrase" || type === "humanize") {
+    const text = typeof body?.text === "string" ? body.text.trim() : "";
+    if (!text) {
+      return NextResponse.json({ error: "Write something first" }, { status: 400 });
+    }
+
+    const guidance = REWRITE_GUIDANCE[type];
+    const contents = `${guidance}${prompt ? `\n\nAdditional instructions: ${prompt}` : ""}\n\nText:\n"""\n${text}\n"""`;
+
+    const { text: resultText, lastError } = await generateWithFallback(ai, contents, {
+      ...REWRITE_CONFIG,
+      systemInstruction: REWRITE_SYSTEM_INSTRUCTION[type],
+    });
+    if (lastError) return errorResponse(lastError);
+    if (!resultText) {
+      return NextResponse.json({ error: "AI returned an empty response" }, { status: 502 });
+    }
+
+    let parsed: AiRewriteResponse;
+    try {
+      parsed = JSON.parse(resultText);
+    } catch {
+      return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 502 });
+    }
+
+    if (typeof parsed.text !== "string" || !parsed.text.trim()) {
+      return NextResponse.json({ error: "AI returned no text" }, { status: 502 });
+    }
+
+    return NextResponse.json(parsed);
+  }
 
   if (type === "notes") {
     const imageBase64 = typeof body?.imageBase64 === "string" ? body.imageBase64 : "";
@@ -209,7 +264,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
-  const guidance = TYPE_GUIDANCE[type] ?? TYPE_GUIDANCE.diagram;
+  const guidance = TYPE_GUIDANCE[type as Exclude<AiDiagramType, "notes">] ?? TYPE_GUIDANCE.diagram;
   const contents = existing
     ? `Here is the current diagram as JSON:\n${JSON.stringify(existing)}\n\nUpdate it to: ${prompt}\n\nReturn the complete, updated diagram (all nodes and edges, not just the changes), reusing existing "id" values for nodes you keep so the layout stays stable.`
     : `Create ${guidance} for: ${prompt}`;
