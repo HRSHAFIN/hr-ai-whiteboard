@@ -52,13 +52,21 @@ export function WorkspaceEditor({
     files: initialData.files,
   });
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // persist() is scheduled via setTimeout and may fire long after the render
+  // that created it -- reading `doc`/`mode` state directly would save a stale
+  // value (the debounce timer always lagged one keystroke behind, silently
+  // dropping whatever was typed right before the user stopped). Refs are
+  // mutated synchronously in the change handlers below, so persist() always
+  // sees the latest value regardless of which render scheduled it.
+  const docRef = useRef(initialData.doc);
+  const modeRef = useRef(initialData.mode);
 
   const persist = () => {
     setSaveState("saving");
     startTransition(async () => {
       await saveWhiteboardData(boardId, {
-        mode,
-        doc,
+        mode: modeRef.current,
+        doc: docRef.current,
         elements: sceneRef.current.elements,
         appState: sceneRef.current.appState,
         files: sceneRef.current.files,
@@ -120,11 +128,13 @@ export function WorkspaceEditor({
   };
 
   const handleDocChange = (value: string) => {
+    docRef.current = value;
     setDoc(value);
     scheduleSave();
   };
 
   const handleModeChange = (value: WorkspaceMode) => {
+    modeRef.current = value;
     setMode(value);
     scheduleSave();
   };
