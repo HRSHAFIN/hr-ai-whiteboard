@@ -2,20 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Archive,
-  FilePlus2,
-  Files,
-  Settings,
-  Share2,
-  Sparkles,
-  UserCog,
-} from "lucide-react";
+import { Archive, FilePlus2, Files, Settings, Share2 } from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -69,27 +60,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="pointer-events-none">
-              <Sparkles />
-              <span>Credits Remaining: 42</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Profile Settings"
-              isActive={pathname === "/dashboard/settings"}
-              render={<Link href="/dashboard/settings" />}
-            >
-              <UserCog />
-              <span>Profile Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
