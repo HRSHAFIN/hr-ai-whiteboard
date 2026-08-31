@@ -36,14 +36,20 @@ import { NotesPopover } from "@/components/workspace/notes-popover";
 import { cn } from "@/lib/utils";
 import type { ExcalidrawImperativeAPI, ToolType } from "@excalidraw/excalidraw/types";
 
-const TOOLS: { type: ToolType; icon: typeof Square; label: string }[] = [
+const TOOLS_BEFORE_SHAPES: { type: ToolType; icon: typeof Square; label: string }[] = [
   { type: "selection", icon: MousePointer2, label: "Selection" },
   { type: "hand", icon: Hand, label: "Hand" },
+];
+
+const SHAPE_TOOLS: { type: ToolType; icon: typeof Square; label: string }[] = [
   { type: "rectangle", icon: Square, label: "Rectangle" },
   { type: "diamond", icon: Diamond, label: "Diamond" },
   { type: "ellipse", icon: Circle, label: "Circle" },
   { type: "arrow", icon: MoveUpRight, label: "Arrow" },
   { type: "line", icon: Minus, label: "Line" },
+];
+
+const TOOLS_AFTER_SHAPES: { type: ToolType; icon: typeof Square; label: string }[] = [
   { type: "freedraw", icon: Pencil, label: "Draw" },
   { type: "text", icon: Type, label: "Text" },
   { type: "eraser", icon: Eraser, label: "Eraser" },
@@ -108,10 +114,19 @@ export function WhiteboardToolbar({
   const [strokeWidth, setStrokeWidth] = useState(2);
   const [strokeColor, setStrokeColor] = useState(QUICK_COLORS[0]);
   const [locked, setLocked] = useState(false);
+  const [lastShape, setLastShape] = useState<ToolType>("rectangle");
 
   const setTool = (type: ToolType) => {
     excalidrawAPI?.setActiveTool({ type });
   };
+
+  const setShapeTool = (type: ToolType) => {
+    setLastShape(type);
+    setTool(type);
+  };
+
+  const isShapeActive = SHAPE_TOOLS.some((tool) => tool.type === activeTool);
+  const ShapeTriggerIcon = SHAPE_TOOLS.find((tool) => tool.type === lastShape)?.icon ?? Square;
 
   const setColor = (color: string) => {
     setStrokeColor(color);
@@ -145,7 +160,56 @@ export function WhiteboardToolbar({
 
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
-      {TOOLS.map((tool) => (
+      {TOOLS_BEFORE_SHAPES.map((tool) => (
+        <Button
+          key={tool.type}
+          variant={activeTool === tool.type ? "secondary" : "ghost"}
+          size="icon-lg"
+          title={tool.label}
+          disabled={locked}
+          onClick={() => setTool(tool.type)}
+          className={cn("size-8 sm:size-9", activeTool === tool.type && "ring-1 ring-primary/40")}
+        >
+          <tool.icon className={cn("size-4 sm:size-5", TOOL_COLORS[tool.type])} />
+          <span className="sr-only">{tool.label}</span>
+        </Button>
+      ))}
+
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              variant={isShapeActive ? "secondary" : "ghost"}
+              size="icon-lg"
+              title="Shapes"
+              disabled={locked}
+              className={cn("size-8 sm:size-9", isShapeActive && "ring-1 ring-primary/40")}
+            />
+          }
+        >
+          <ShapeTriggerIcon className={cn("size-4 sm:size-5", TOOL_COLORS[lastShape])} />
+          <span className="sr-only">Shapes</span>
+        </PopoverTrigger>
+        <PopoverContent side="right" align="start" className="w-auto p-1.5">
+          <div className="grid grid-cols-3 gap-1">
+            {SHAPE_TOOLS.map((tool) => (
+              <Button
+                key={tool.type}
+                variant={activeTool === tool.type ? "secondary" : "ghost"}
+                size="icon-lg"
+                title={tool.label}
+                onClick={() => setShapeTool(tool.type)}
+                className={cn("size-9", activeTool === tool.type && "ring-1 ring-primary/40")}
+              >
+                <tool.icon className={cn("size-5", TOOL_COLORS[tool.type])} />
+                <span className="sr-only">{tool.label}</span>
+              </Button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {TOOLS_AFTER_SHAPES.map((tool) => (
         <Button
           key={tool.type}
           variant={activeTool === tool.type ? "secondary" : "ghost"}
