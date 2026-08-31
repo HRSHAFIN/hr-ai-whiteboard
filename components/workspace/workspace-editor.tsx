@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
@@ -41,7 +41,7 @@ export function WorkspaceEditor({
   const [doc, setDoc] = useState(initialData.doc);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
-  const [activeTool, setActiveToolState] = useState<string>("selection");
+  const [activeTool, setActiveToolState] = useState<string>("hand");
   const [selectedElement, setSelectedElement] = useState<ExcalidrawElement | null>(null);
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
   const [aiSidebarOpen, setAiSidebarOpen] = useState(false);
@@ -62,6 +62,19 @@ export function WorkspaceEditor({
   // sees the latest value regardless of which render scheduled it.
   const docRef = useRef(initialData.doc);
   const modeRef = useRef(initialData.mode);
+
+  // Default to the Hand tool every time a board is opened (new or reopened),
+  // regardless of whatever tool was active when it was last saved -- matches
+  // the "always start ready to pan" behavior, independent of the saved scene.
+  // The short delay is deliberate: calling setActiveTool in the same tick
+  // excalidrawAPI first becomes available races Excalidraw's own initial
+  // state settling (e.g. applying initialData/scrollToContent) and gets
+  // silently overwritten back to "selection" -- confirmed by testing.
+  useEffect(() => {
+    if (!excalidrawAPI) return;
+    const id = setTimeout(() => excalidrawAPI.setActiveTool({ type: "hand" }), 100);
+    return () => clearTimeout(id);
+  }, [excalidrawAPI]);
 
   const persist = () => {
     setSaveState("saving");

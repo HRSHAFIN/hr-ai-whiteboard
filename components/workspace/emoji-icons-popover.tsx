@@ -49,8 +49,10 @@ const ICON_COMPONENTS: Record<string, LucideIconComponent> = {
 
 export function EmojiIconsPopover({
   excalidrawAPI,
+  disabled,
 }: {
   excalidrawAPI: ExcalidrawImperativeAPI | null;
+  disabled?: boolean;
 }) {
   const [inserting, setInserting] = useState(false);
 
@@ -115,7 +117,9 @@ export function EmojiIconsPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Emoji" className="size-8 sm:size-9" />}>
+      <PopoverTrigger
+        render={<Button variant="ghost" size="icon-lg" title="Emoji" className="size-8 sm:size-9" disabled={disabled} />}
+      >
         <Smile className="size-4 sm:size-5" />
         <span className="sr-only">Emoji</span>
       </PopoverTrigger>

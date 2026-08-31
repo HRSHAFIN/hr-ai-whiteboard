@@ -8,6 +8,8 @@ import {
   Frame,
   Hand,
   Image as ImageIcon,
+  Lock,
+  LockOpen,
   Minus,
   MoreHorizontal,
   MousePointer2,
@@ -105,6 +107,7 @@ export function WhiteboardToolbar({
 }) {
   const [strokeWidth, setStrokeWidth] = useState(2);
   const [strokeColor, setStrokeColor] = useState(QUICK_COLORS[0]);
+  const [locked, setLocked] = useState(false);
 
   const setTool = (type: ToolType) => {
     excalidrawAPI?.setActiveTool({ type });
@@ -129,12 +132,26 @@ export function WhiteboardToolbar({
 
   return (
     <div className="absolute top-2 left-2 z-10 flex max-h-[calc(100vh-4.5rem)] flex-col gap-0.5 overflow-y-auto rounded-xl border bg-popover p-1 shadow-lg sm:top-3 sm:left-3 sm:max-h-[calc(100vh-5.5rem)] sm:gap-1">
+      <Button
+        variant={locked ? "secondary" : "ghost"}
+        size="icon-lg"
+        title={locked ? "Unlock toolbar" : "Lock toolbar"}
+        onClick={() => setLocked((prev) => !prev)}
+        className={cn("size-8 sm:size-9", locked && "ring-1 ring-primary/40")}
+      >
+        {locked ? <Lock className="size-4 text-amber-600 sm:size-5" /> : <LockOpen className="size-4 sm:size-5" />}
+        <span className="sr-only">{locked ? "Unlock toolbar" : "Lock toolbar"}</span>
+      </Button>
+
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
+
       {TOOLS.map((tool) => (
         <Button
           key={tool.type}
           variant={activeTool === tool.type ? "secondary" : "ghost"}
           size="icon-lg"
           title={tool.label}
+          disabled={locked}
           onClick={() => setTool(tool.type)}
           className={cn("size-8 sm:size-9", activeTool === tool.type && "ring-1 ring-primary/40")}
         >
@@ -149,6 +166,7 @@ export function WhiteboardToolbar({
         variant="ghost"
         size="icon-lg"
         title="Brush size"
+        disabled={locked}
         onClick={cycleStrokeWidth}
         className="size-8 text-xs font-semibold sm:size-9"
       >
@@ -159,7 +177,15 @@ export function WhiteboardToolbar({
 
       <Popover>
         <PopoverTrigger
-          render={<Button variant="ghost" size="icon-lg" title="Stroke color" className="size-8 sm:size-9" />}
+          render={
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              title="Stroke color"
+              className="size-8 sm:size-9"
+              disabled={locked}
+            />
+          }
         >
           <span
             style={{ backgroundColor: strokeColor }}
@@ -187,16 +213,30 @@ export function WhiteboardToolbar({
 
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
-      <NotesPopover excalidrawAPI={excalidrawAPI} />
-      <EmojiIconsPopover excalidrawAPI={excalidrawAPI} />
+      <NotesPopover excalidrawAPI={excalidrawAPI} disabled={locked} />
+      <EmojiIconsPopover excalidrawAPI={excalidrawAPI} disabled={locked} />
 
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
-      <Button variant="ghost" size="icon-lg" title="Undo" className="size-8 sm:size-9" onClick={() => fireHistoryShortcut(false)}>
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        title="Undo"
+        disabled={locked}
+        className="size-8 sm:size-9"
+        onClick={() => fireHistoryShortcut(false)}
+      >
         <Undo2 className="size-4 sm:size-5" />
         <span className="sr-only">Undo</span>
       </Button>
-      <Button variant="ghost" size="icon-lg" title="Redo" className="size-8 sm:size-9" onClick={() => fireHistoryShortcut(true)}>
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        title="Redo"
+        disabled={locked}
+        className="size-8 sm:size-9"
+        onClick={() => fireHistoryShortcut(true)}
+      >
         <Redo2 className="size-4 sm:size-5" />
         <span className="sr-only">Redo</span>
       </Button>
@@ -204,7 +244,11 @@ export function WhiteboardToolbar({
       <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" title="More tools" className="size-8 sm:size-9" />}>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon-lg" title="More tools" className="size-8 sm:size-9" disabled={locked} />
+          }
+        >
           <MoreHorizontal className="size-4 text-muted-foreground sm:size-5" />
           <span className="sr-only">More tools</span>
         </DropdownMenuTrigger>

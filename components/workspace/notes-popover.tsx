@@ -18,8 +18,10 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 export function NotesPopover({
   excalidrawAPI,
+  disabled,
 }: {
   excalidrawAPI: ExcalidrawImperativeAPI | null;
+  disabled?: boolean;
 }) {
   const insertTemplate = async (template: NoteTemplate) => {
     if (!excalidrawAPI) return;
@@ -53,7 +55,9 @@ export function NotesPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Notes" className="size-8 sm:size-9" />}>
+      <PopoverTrigger
+        render={<Button variant="ghost" size="icon-lg" title="Notes" className="size-8 sm:size-9" disabled={disabled} />}
+      >
         <NotebookPen className="size-4 sm:size-5" />
         <span className="sr-only">Notes</span>
       </PopoverTrigger>
