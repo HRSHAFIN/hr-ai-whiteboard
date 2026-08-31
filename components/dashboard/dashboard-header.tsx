@@ -1,13 +1,13 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { CreateWhiteboardDialog } from "@/components/dashboard/create-whiteboard-dialog";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "All Files",
@@ -16,9 +16,24 @@ const pageTitles: Record<string, string> = {
   "/dashboard/settings": "Settings",
 };
 
+const SEARCHABLE_PATHS = ["/dashboard", "/dashboard/archive"];
+
 export function DashboardHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const title = pageTitles[pathname] ?? "Dashboard";
+  const searchable = SEARCHABLE_PATHS.includes(pathname);
+
+  const handleSearchChange = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -27,14 +42,18 @@ export function DashboardHeader() {
       <h1 className="font-heading text-sm font-semibold">{title}</h1>
 
       <div className="ml-auto flex items-center gap-3">
-        <div className="relative hidden sm:block">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search files..." className="w-56 pl-8" />
-        </div>
-        <Button size="sm">
-          <Plus />
-          New
-        </Button>
+        {searchable && (
+          <div className="relative hidden sm:block">
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search files..."
+              className="w-56 pl-8"
+              defaultValue={searchParams.get("q") ?? ""}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+        )}
+        <CreateWhiteboardDialog triggerLabel="New" variant="default" />
         <UserButton />
       </div>
     </header>

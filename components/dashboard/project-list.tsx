@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Archive, FolderHeart, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Archive, FolderHeart, Loader2, SearchX } from "lucide-react";
 
 import { CreateWhiteboardDialog } from "@/components/dashboard/create-whiteboard-dialog";
 import { ProjectCard } from "@/components/dashboard/project-card";
@@ -27,6 +28,7 @@ function parseBoard(board: Whiteboard): Whiteboard {
 export function ProjectList({ archived = false }: { archived?: boolean }) {
   const [boards, setBoards] = useState<Whiteboard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const query = useSearchParams().get("q")?.trim() ?? "";
 
   const load = useCallback(async () => {
     setError(null);
@@ -79,9 +81,27 @@ export function ProjectList({ archived = false }: { archived?: boolean }) {
     );
   }
 
+  const filtered = query
+    ? boards.filter((board) => board.title.toLowerCase().includes(query.toLowerCase()))
+    : boards;
+
+  if (filtered.length === 0) {
+    return (
+      <Empty className="flex-1 border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyTitle>No matches for &quot;{query}&quot;</EmptyTitle>
+          <EmptyDescription>Try a different search term.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {boards.map((board) => (
+      {filtered.map((board) => (
         <ProjectCard key={board.id} board={board} archived={archived} onChanged={load} />
       ))}
     </div>

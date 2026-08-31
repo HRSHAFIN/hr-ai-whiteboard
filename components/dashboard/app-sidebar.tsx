@@ -22,7 +22,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 
 const navItems = [
@@ -51,24 +50,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Create New File"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                >
-                  <FilePlus2 />
-                  <span>Create New File</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
