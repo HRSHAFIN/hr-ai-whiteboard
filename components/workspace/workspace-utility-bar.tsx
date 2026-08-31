@@ -14,8 +14,7 @@ import {
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 const GITHUB_URL = "https://github.com/HRSHAFIN";
-// TODO: set your real portfolio URL, then this row becomes a live link.
-const PORTFOLIO_URL = "";
+const PORTFOLIO_URL = "https://hr-mern-portfolio.vercel.app/";
 
 const CONTACT_LINKS = [
   { label: "GitHub", description: "Check out my projects", href: GITHUB_URL, icon: Github },
