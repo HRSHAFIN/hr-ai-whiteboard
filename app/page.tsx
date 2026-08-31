@@ -53,7 +53,7 @@ const CAPABILITIES = [
 function Logo() {
   return (
     <span
-      className="size-6 rounded-full"
+      className="size-7 rounded-full sm:size-8"
       style={{
         background:
           "conic-gradient(from 0deg, #2563eb 0deg 90deg, #16a34a 90deg 180deg, #f59e0b 180deg 270deg, #ec4899 270deg 360deg)",
@@ -65,14 +65,14 @@ function Logo() {
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
-        <Link href="/" className="flex shrink-0 items-center gap-2 font-heading text-base font-semibold whitespace-nowrap sm:text-lg">
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-5 sm:px-6 sm:py-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 font-heading text-lg font-semibold whitespace-nowrap sm:text-xl">
           <Logo />
           <span className="hidden sm:inline">HR AI Whiteboard</span>
           <span className="sm:hidden">HR AI</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-neutral-600 md:flex">
+        <nav className="hidden items-center gap-8 text-base font-medium text-neutral-600 md:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
@@ -84,14 +84,14 @@ export default function Home() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
           <Link
             href="/sign-in"
-            className="hidden rounded-sm text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40 sm:inline"
+            className="hidden rounded-sm text-base font-medium text-neutral-600 transition-colors hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40 sm:inline"
           >
             Sign in
           </Link>
-          <Button render={<Link href="/dashboard" />} className="rounded-full" size="sm">
+          <Button render={<Link href="/dashboard" />} className="rounded-full">
             <span className="hidden sm:inline">Open dashboard</span>
             <span className="sm:hidden">Dashboard</span>
             <ArrowRight />
