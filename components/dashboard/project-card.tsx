@@ -47,16 +47,18 @@ export function ProjectCard({
   };
 
   return (
-    <Card className="gap-0 py-0">
-      <Link href={`/workspace/${board.id}`}>
-        <div className="flex h-28 items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+    <Card className="group/project-card gap-0 py-0 transition-all hover:shadow-md hover:ring-primary/25">
+      <Link href={`/workspace/${board.id}`} className="block overflow-hidden">
+        <div className="flex h-28 items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5 transition-transform duration-300 group-hover/project-card:scale-105">
           <PenSquare className="size-8 text-primary/60" />
         </div>
       </Link>
 
       <CardHeader className="pt-4">
         <CardTitle className="truncate">
-          <Link href={`/workspace/${board.id}`}>{board.title}</Link>
+          <Link href={`/workspace/${board.id}`} className="hover:text-primary hover:underline">
+            {board.title}
+          </Link>
         </CardTitle>
       </CardHeader>
 

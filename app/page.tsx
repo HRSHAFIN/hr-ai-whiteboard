@@ -74,7 +74,11 @@ export default function Home() {
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-neutral-600 md:flex">
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-neutral-900">
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-sm transition-colors hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40"
+            >
               {link.label}
             </a>
           ))}
@@ -83,7 +87,7 @@ export default function Home() {
         <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           <Link
             href="/sign-in"
-            className="hidden text-sm font-medium text-neutral-600 hover:text-neutral-900 sm:inline"
+            className="hidden rounded-sm text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40 sm:inline"
           >
             Sign in
           </Link>
@@ -95,7 +99,7 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="relative mx-auto grid max-w-7xl gap-12 overflow-hidden px-6 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
+      <section id="workspace" className="relative mx-auto grid max-w-7xl scroll-mt-20 gap-12 overflow-hidden px-6 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
         <div>
           <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium text-blue-600">
             <Sparkles className="size-3.5" />
@@ -235,7 +239,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="workflow" className="mx-auto max-w-7xl px-6 py-20">
+      <section id="workflow" className="mx-auto max-w-7xl scroll-mt-20 px-6 py-20">
         <h2 className="text-center font-heading text-3xl font-bold tracking-tight">
           From sketch to structured plan
         </h2>
@@ -252,7 +256,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="features" className="bg-neutral-50 py-20">
+      <section id="features" className="scroll-mt-20 bg-neutral-50 py-20">
         <div className="mx-auto max-w-7xl px-6">
           <h2 className="text-center font-heading text-3xl font-bold tracking-tight">
             Capabilities
@@ -271,7 +275,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer id="workspace" className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-neutral-500">
+      <footer className="mx-auto max-w-7xl px-6 py-10 text-center text-sm text-neutral-500">
         HR AI Whiteboard — build clearer ideas, together with AI.
       </footer>
     </main>
