@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   Archive,
@@ -14,6 +14,16 @@ import {
 } from "lucide-react";
 
 import { archiveWhiteboard, deleteWhiteboard, restoreWhiteboard } from "@/app/dashboard/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -35,6 +45,7 @@ export function ProjectCard({
   onChanged?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleShare = async () => {
     const url = `${window.location.origin}/workspace/${board.id}`;
@@ -104,12 +115,16 @@ export function ProjectCard({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               variant="destructive"
-              onClick={() =>
-                startTransition(async () => {
-                  await deleteWhiteboard(board.id);
-                  onChanged?.();
-                })
-              }
+              onClick={() => {
+                if (archived) {
+                  setConfirmDeleteOpen(true);
+                } else {
+                  startTransition(async () => {
+                    await archiveWhiteboard(board.id);
+                    onChanged?.();
+                  });
+                }
+              }}
             >
               <Trash2 />
               Delete
@@ -117,6 +132,33 @@ export function ProjectCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </CardFooter>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &quot;{board.title}&quot; permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This can&apos;t be undone. The whiteboard and everything on it will be gone for
+              good.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isPending}
+              onClick={() =>
+                startTransition(async () => {
+                  await deleteWhiteboard(board.id);
+                  onChanged?.();
+                })
+              }
+            >
+              Delete permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
