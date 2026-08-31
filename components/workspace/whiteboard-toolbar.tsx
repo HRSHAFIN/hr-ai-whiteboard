@@ -127,7 +127,7 @@ export function WhiteboardToolbar({
   };
 
   return (
-    <div className="absolute top-3 left-3 z-10 flex max-h-[calc(100vh-5.5rem)] flex-col gap-1 overflow-y-auto rounded-xl border bg-popover p-1 shadow-lg">
+    <div className="absolute top-2 left-2 z-10 flex max-h-[calc(100vh-4.5rem)] flex-col gap-0.5 overflow-y-auto rounded-xl border bg-popover p-1 shadow-lg sm:top-3 sm:left-3 sm:max-h-[calc(100vh-5.5rem)] sm:gap-1">
       {TOOLS.map((tool) => (
         <Button
           key={tool.type}
@@ -135,26 +135,26 @@ export function WhiteboardToolbar({
           size="icon-lg"
           title={tool.label}
           onClick={() => setTool(tool.type)}
-          className={cn(activeTool === tool.type && "ring-1 ring-primary/40")}
+          className={cn("size-8 sm:size-9", activeTool === tool.type && "ring-1 ring-primary/40")}
         >
-          <tool.icon className={cn("size-5", TOOL_COLORS[tool.type])} />
+          <tool.icon className={cn("size-4 sm:size-5", TOOL_COLORS[tool.type])} />
           <span className="sr-only">{tool.label}</span>
         </Button>
       ))}
 
-      <div className="my-1 h-px w-full bg-border" />
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
       <Button
         variant="ghost"
         size="icon-lg"
         title="Brush size"
         onClick={cycleStrokeWidth}
-        className="text-xs font-semibold"
+        className="size-8 text-xs font-semibold sm:size-9"
       >
         {strokeWidth}px
       </Button>
 
-      <div className="my-1 h-px w-full bg-border" />
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
       <div className="grid grid-cols-2 gap-1 p-0.5">
         {QUICK_COLORS.map((color) => (
@@ -164,34 +164,34 @@ export function WhiteboardToolbar({
             onClick={() => setColor(color)}
             style={{ backgroundColor: color }}
             className={cn(
-              "size-4 shrink-0 rounded-full ring-1 ring-foreground/10 transition-transform hover:scale-110",
+              "size-3.5 shrink-0 rounded-full ring-1 ring-foreground/10 transition-transform hover:scale-110 sm:size-4",
               strokeColor === color && "ring-2 ring-primary"
             )}
           />
         ))}
       </div>
 
-      <div className="my-1 h-px w-full bg-border" />
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
       <NotesPopover excalidrawAPI={excalidrawAPI} />
       <EmojiIconsPopover excalidrawAPI={excalidrawAPI} />
 
-      <div className="my-1 h-px w-full bg-border" />
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
-      <Button variant="ghost" size="icon-lg" title="Undo" onClick={() => fireHistoryShortcut(false)}>
-        <Undo2 className="size-5" />
+      <Button variant="ghost" size="icon-lg" title="Undo" className="size-8 sm:size-9" onClick={() => fireHistoryShortcut(false)}>
+        <Undo2 className="size-4 sm:size-5" />
         <span className="sr-only">Undo</span>
       </Button>
-      <Button variant="ghost" size="icon-lg" title="Redo" onClick={() => fireHistoryShortcut(true)}>
-        <Redo2 className="size-5" />
+      <Button variant="ghost" size="icon-lg" title="Redo" className="size-8 sm:size-9" onClick={() => fireHistoryShortcut(true)}>
+        <Redo2 className="size-4 sm:size-5" />
         <span className="sr-only">Redo</span>
       </Button>
 
-      <div className="my-1 h-px w-full bg-border" />
+      <div className="my-0.5 h-px w-full bg-border sm:my-1" />
 
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" title="More tools" />}>
-          <MoreHorizontal className="size-5 text-muted-foreground" />
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" title="More tools" className="size-8 sm:size-9" />}>
+          <MoreHorizontal className="size-4 text-muted-foreground sm:size-5" />
           <span className="sr-only">More tools</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">

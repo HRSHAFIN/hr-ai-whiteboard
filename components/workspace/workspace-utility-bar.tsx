@@ -32,7 +32,7 @@ export function WorkspaceUtilityBar({
   excalidrawAPI: ExcalidrawImperativeAPI | null;
 }) {
   return (
-    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+    <div className="absolute top-2 right-2 z-10 flex items-center gap-2 sm:top-3 sm:right-3">
       <Button
         variant="ghost"
         className="gap-1.5 rounded-xl border bg-popover shadow-lg"

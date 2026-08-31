@@ -1,11 +1,21 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Provider from './provider';
 
 export const metadata: Metadata = {
   title: "HR AI Whiteboard",
   description: "An agentic AI whiteboard for turning ideas into structured diagrams and boards.",
+};
+
+// The app has no dark theme, and Excalidraw's canvas is opaque to it anyway --
+// without this, some mobile browsers (Android "forced dark mode") auto-invert
+// the DOM chrome while leaving the canvas untouched, producing a broken,
+// half-inverted look. Declaring light-only opts out of that heuristic.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "light",
 };
 
 const isClerkConfigured =

@@ -115,8 +115,8 @@ export function EmojiIconsPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Emoji" />}>
-        <Smile className="size-5" />
+      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Emoji" className="size-8 sm:size-9" />}>
+        <Smile className="size-4 sm:size-5" />
         <span className="sr-only">Emoji</span>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" className="w-80">

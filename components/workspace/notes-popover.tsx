@@ -53,8 +53,8 @@ export function NotesPopover({
 
   return (
     <Popover>
-      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Notes" />}>
-        <NotebookPen className="size-5" />
+      <PopoverTrigger render={<Button variant="ghost" size="icon-lg" title="Notes" className="size-8 sm:size-9" />}>
+        <NotebookPen className="size-4 sm:size-5" />
         <span className="sr-only">Notes</span>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" className="w-72">

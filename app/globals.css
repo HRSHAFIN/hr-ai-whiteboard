@@ -48,6 +48,11 @@
 }
 
 :root {
+    /* No dark theme is wired up (the .dark tokens below are unused
+       boilerplate) -- without this, some mobile browsers auto-invert the
+       DOM chrome under OS-level forced-dark-mode while leaving Excalidraw's
+       <canvas> untouched, producing a broken, half-inverted look. */
+    color-scheme: light;
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
