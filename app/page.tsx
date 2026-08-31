@@ -65,10 +65,11 @@ function Logo() {
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-neutral-900">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 font-heading text-lg font-semibold">
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+        <Link href="/" className="flex shrink-0 items-center gap-2 font-heading text-base font-semibold whitespace-nowrap sm:text-lg">
           <Logo />
-          HR AI Whiteboard
+          <span className="hidden sm:inline">HR AI Whiteboard</span>
+          <span className="sm:hidden">HR AI</span>
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-neutral-600 md:flex">
@@ -79,12 +80,16 @@ export default function Home() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <Link href="/sign-in" className="text-sm font-medium text-neutral-600 hover:text-neutral-900">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          <Link
+            href="/sign-in"
+            className="hidden text-sm font-medium text-neutral-600 hover:text-neutral-900 sm:inline"
+          >
             Sign in
           </Link>
-          <Button render={<Link href="/dashboard" />} className="rounded-full">
-            Open dashboard
+          <Button render={<Link href="/dashboard" />} className="rounded-full" size="sm">
+            <span className="hidden sm:inline">Open dashboard</span>
+            <span className="sm:hidden">Dashboard</span>
             <ArrowRight />
           </Button>
         </div>
@@ -160,9 +165,9 @@ export default function Home() {
               </div>
 
               <div
-                className="relative h-[340px] flex-1 bg-[radial-gradient(circle,#e5e5e5_1px,transparent_1px)] bg-[length:18px_18px]"
+                className="relative h-[220px] flex-1 bg-[radial-gradient(circle,#e5e5e5_1px,transparent_1px)] bg-[length:18px_18px] sm:h-[340px]"
               >
-                <svg className="pointer-events-none absolute inset-0 size-full">
+                <svg className="pointer-events-none absolute inset-0 hidden size-full sm:block">
                   <path
                     d="M 110 55 C 200 20, 300 20, 355 55"
                     stroke="#d4d4d4"
@@ -179,20 +184,20 @@ export default function Home() {
                   />
                 </svg>
 
-                <div className="absolute top-11 left-5 rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-800 shadow-sm">
+                <div className="absolute top-11 left-5 hidden rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-800 shadow-sm sm:block">
                   User goal
                 </div>
-                <div className="absolute top-16 right-5 rounded-lg bg-violet-100 px-3 py-2 text-xs font-semibold text-violet-800 shadow-sm">
+                <div className="absolute top-16 right-5 hidden rounded-lg bg-violet-100 px-3 py-2 text-xs font-semibold text-violet-800 shadow-sm sm:block">
                   AI expands context
                 </div>
-                <div className="absolute top-32 left-8 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800 shadow-sm">
+                <div className="absolute top-32 left-8 hidden rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800 shadow-sm sm:block">
                   Sketch the flow
                 </div>
-                <div className="absolute top-52 right-8 rounded-lg bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800 shadow-sm">
+                <div className="absolute top-52 right-8 hidden rounded-lg bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800 shadow-sm sm:block">
                   Ship-ready plan
                 </div>
 
-                <div className="absolute top-24 left-1/2 w-52 -translate-x-1/2 rounded-xl border bg-white p-3 shadow-md">
+                <div className="absolute top-1/2 left-1/2 w-44 -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-white p-3 shadow-md sm:top-24 sm:w-52 sm:translate-y-0">
                   <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
                     <Sparkles className="size-3.5 text-blue-600" />
                     AI synthesis

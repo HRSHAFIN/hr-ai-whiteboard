@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AiSidebar } from "@/components/workspace/ai-sidebar";
 import { PropertiesToolbar } from "@/components/workspace/properties-toolbar";
 import { WhiteboardToolbar } from "@/components/workspace/whiteboard-toolbar";
+import { WorkspaceUtilityBar } from "@/components/workspace/workspace-utility-bar";
 import { cn } from "@/lib/utils";
 import type { WhiteboardData, WorkspaceMode } from "@/lib/whiteboard-types";
 
@@ -242,6 +243,7 @@ export function WorkspaceEditor({
             onChange={handleExcalidrawChange}
           />
           <WhiteboardToolbar excalidrawAPI={excalidrawAPI} activeTool={activeTool} />
+          <WorkspaceUtilityBar excalidrawAPI={excalidrawAPI} />
           {selectedElement && toolbarPosition && (
             <PropertiesToolbar
               key={selectedElement.id}

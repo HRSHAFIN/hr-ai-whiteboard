@@ -129,11 +129,15 @@
 }
 
 /* Custom whiteboard chrome: hide Excalidraw's default shape toolbar,
-   bottom-left zoom/undo cluster, and per-selection properties panel in
-   favor of our own left toolbar, floating quick-tools bar, and
-   above-selection properties toolbar. */
+   bottom-left zoom/undo cluster, per-selection properties panel, default
+   library trigger, and default help icon in favor of our own left toolbar,
+   above-selection properties toolbar, and top-right Library/Help cluster
+   (the defaults also disappear on their own under ~860px, which our
+   replacement keeps visible at every viewport). */
 .custom-whiteboard-shell .App-toolbar-container,
 .custom-whiteboard-shell .layer-ui__wrapper__footer-left,
-.custom-whiteboard-shell .selected-shape-actions {
+.custom-whiteboard-shell .selected-shape-actions,
+.custom-whiteboard-shell .default-sidebar-trigger,
+.custom-whiteboard-shell .help-icon {
   display: none !important;
 }
