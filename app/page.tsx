@@ -99,7 +99,10 @@ export default function Home() {
         </div>
       </header>
 
-      <section id="workspace" className="relative mx-auto grid max-w-7xl scroll-mt-20 gap-12 overflow-hidden px-6 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
+      <section
+        id="workspace"
+        className="relative mx-auto grid max-w-7xl scroll-mt-20 gap-12 overflow-hidden px-6 py-16 lg:grid-cols-2 lg:items-center lg:py-24 lg:min-h-[calc(100svh-5rem)]"
+      >
         <div>
           <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium text-blue-600">
             <Sparkles className="size-3.5" />
